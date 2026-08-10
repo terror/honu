@@ -108,18 +108,19 @@ impl Test {
     let connection = Connection::open(self.path(path)).unwrap();
 
     pretty_assert_eq!(
-      (
-        connection
-          .query_row("PRAGMA integrity_check", [], |row| row
-            .get::<_, String>(0))
-          .unwrap(),
-        connection
-          .query_row("SELECT COUNT(*) FROM executions", [], |row| {
-            row.get::<_, i64>(0)
-          })
-          .unwrap(),
-      ),
-      ("ok".into(), executions),
+      connection
+        .query_row("PRAGMA integrity_check", [], |row| row.get::<_, String>(0))
+        .unwrap(),
+      "ok",
+    );
+
+    pretty_assert_eq!(
+      connection
+        .query_row("SELECT COUNT(*) FROM executions", [], |row| {
+          row.get::<_, i64>(0)
+        })
+        .unwrap(),
+      executions,
     );
 
     self
