@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate pretty_assertions;
-
 use {
   anyhow::Context,
   indoc::{formatdoc, indoc},
@@ -17,6 +14,9 @@ use {
   },
   tempfile::TempDir,
 };
+
+#[macro_use]
+extern crate pretty_assertions;
 
 mod add;
 mod backup;
