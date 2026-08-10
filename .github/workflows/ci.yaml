@@ -33,7 +33,7 @@ jobs:
         tool: cargo-llvm-cov
 
     - name: Generate coverage report
-      run: cargo llvm-cov --workspace --all-features --all-targets --lcov --output-path lcov.info
+      run: cargo llvm-cov --locked --workspace --all-features --all-targets --lcov --output-path lcov.info
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v5
@@ -52,7 +52,7 @@ jobs:
     - uses: Swatinem/rust-cache@v2
 
     - name: Clippy
-      run: cargo clippy --all --all-targets
+      run: cargo clippy --locked --workspace --all-targets
 
     - name: Format
       run: cargo fmt --all -- --check
@@ -79,7 +79,7 @@ jobs:
     - uses: Swatinem/rust-cache@v2
 
     - name: Check
-      run: cargo check
+      run: cargo check --locked --workspace --all-targets
 
   shell:
     runs-on: ubuntu-latest
@@ -95,7 +95,7 @@ jobs:
     - uses: Swatinem/rust-cache@v2
 
     - name: Test Shells
-      run: 'cargo test --test integration shell:: -- --ignored'
+      run: 'cargo test --locked --workspace --all-targets --test integration shell:: -- --ignored'
 
   test:
     strategy:
@@ -121,4 +121,4 @@ jobs:
     - uses: Swatinem/rust-cache@v2
 
     - name: Test
-      run: cargo test --all
+      run: cargo test --locked --workspace --all-targets
