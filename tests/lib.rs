@@ -1,7 +1,9 @@
+#[macro_use]
+extern crate pretty_assertions;
+
 use {
   anyhow::Context,
   indoc::{formatdoc, indoc},
-  pretty_assertions::assert_eq as pretty_assert_eq,
   rusqlite::Connection,
   std::{
     env,
@@ -107,14 +109,14 @@ impl Test {
   fn assert_database(self, path: impl AsRef<Path>, executions: i64) -> Self {
     let connection = Connection::open(self.path(path)).unwrap();
 
-    pretty_assert_eq!(
+    assert_eq!(
       connection
         .query_row("PRAGMA integrity_check", [], |row| row.get::<_, String>(0))
         .unwrap(),
       "ok",
     );
 
-    pretty_assert_eq!(
+    assert_eq!(
       connection
         .query_row("SELECT COUNT(*) FROM executions", [], |row| {
           row.get::<_, i64>(0)
@@ -127,7 +129,7 @@ impl Test {
   }
 
   fn assert_execution_count(self, expected: i64) -> Self {
-    pretty_assert_eq!(
+    assert_eq!(
       self
         .database()
         .query_row("SELECT COUNT(*) FROM executions", [], |row| {
@@ -145,10 +147,7 @@ impl Test {
     self,
     expected: impl IntoIterator<Item = Execution>,
   ) -> Self {
-    pretty_assert_eq!(
-      self.executions(),
-      expected.into_iter().collect::<Vec<_>>(),
-    );
+    assert_eq!(self.executions(), expected.into_iter().collect::<Vec<_>>(),);
 
     self
   }
@@ -289,17 +288,17 @@ impl Test {
 
     let stderr = normalize(str::from_utf8(&output.stderr).unwrap());
 
-    pretty_assert_eq!(
+    assert_eq!(
       output.status.code(),
       Some(expected_status),
       "unexpected exit status\nstderr: {stderr}",
     );
 
-    pretty_assert_eq!(stderr, self.expected_stderr);
+    assert_eq!(stderr, self.expected_stderr);
 
     let stdout = normalize(str::from_utf8(&output.stdout).unwrap());
 
-    pretty_assert_eq!(stdout, self.expected_stdout);
+    assert_eq!(stdout, self.expected_stdout);
 
     Self::with_tempdir(self.tempdir)
   }
