@@ -84,12 +84,12 @@ _honu_debug() {
   history="${history#*[[:space:]]}"
   history="${history#"${history%%[![:space:]]*}"}"
 
-  if [[ -n "$history_number" && -n "$history" ]] &&
-    (( 10#$history_number > 10#${__honu_history_number:-0} )); then
-    command="$history"
+  if [[ -z "$history_number" || -z "$history" ]] ||
+    (( 10#$history_number <= 10#${__honu_history_number:-0} )); then
+    return "$exit_code"
   fi
 
-  _honu_preexec "$command"
+  _honu_preexec "$history"
 
   return "$exit_code"
 }
