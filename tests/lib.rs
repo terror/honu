@@ -1,6 +1,6 @@
 use {
   anyhow::Context,
-  indoc::{formatdoc, indoc},
+  indoc::indoc,
   rusqlite::Connection,
   std::{
     env,
@@ -45,31 +45,6 @@ impl Execution {
       command: command.into(),
       timestamp_ns,
       ..Default::default()
-    }
-  }
-}
-
-#[derive(Clone, Copy)]
-enum Shell {
-  Bash,
-  Fish,
-  Zsh,
-}
-
-impl Shell {
-  fn arguments(self) -> &'static [&'static str] {
-    match self {
-      Self::Bash => &["--noprofile", "--norc"],
-      Self::Fish => &["--no-config"],
-      Self::Zsh => &["-f"],
-    }
-  }
-
-  fn name(self) -> &'static str {
-    match self {
-      Self::Bash => "bash",
-      Self::Fish => "fish",
-      Self::Zsh => "zsh",
     }
   }
 }
@@ -148,6 +123,26 @@ impl Test {
     expected: impl IntoIterator<Item = Execution>,
   ) -> Self {
     assert_eq!(self.executions(), expected.into_iter().collect::<Vec<_>>(),);
+
+    self
+  }
+
+  #[track_caller]
+  fn assert_recorded(self, expected: &[(&str, i32, &str)]) -> Self {
+    let executions = self.executions();
+
+    let actual = executions
+      .iter()
+      .map(|execution| {
+        (
+          execution.command.as_str(),
+          execution.exit_code.unwrap(),
+          execution.shell.as_deref().unwrap(),
+        )
+      })
+      .collect::<Vec<_>>();
+
+    assert_eq!(actual, expected);
 
     self
   }
@@ -233,7 +228,10 @@ impl Test {
     self
   }
 
-  fn shell(self, shell: Shell) -> Self {
+  #[track_caller]
+  fn status(self, expected_status: i32) -> Self {
+    let mut command = Command::new(&self.executable);
+
     let path = env::join_paths(
       once(
         Path::new(env!("CARGO_BIN_EXE_honu"))
@@ -245,19 +243,13 @@ impl Test {
     )
     .unwrap();
 
-    self
-      .program(shell.name())
-      .arguments(shell.arguments())
-      .env("PATH", path)
-  }
-
-  #[track_caller]
-  fn status(self, expected_status: i32) -> Self {
-    let mut command = Command::new(&self.executable);
-
     command
       .current_dir(self.tempdir.path())
+      .env("HOME", self.tempdir.path())
+      .env("XDG_CONFIG_HOME", self.tempdir.path())
       .env("XDG_DATA_HOME", self.tempdir.path())
+      .env("ZDOTDIR", self.tempdir.path())
+      .env("PATH", path)
       .args(&self.arguments)
       .stdin(Stdio::piped())
       .stdout(Stdio::piped())

@@ -3,142 +3,92 @@ use super::*;
 #[test]
 #[ignore = "requires bash"]
 fn bash_records_execution() {
-  let script = include_str!("../src/shell/bash/init.bash");
-
   Test::new()
-    .shell(Shell::Bash)
-    .stdin(formatdoc! {
-      "
-      {script}
-      _honu_preexec 'foo'
-      false
-      _honu_precmd
-      "
-    })
+    .program("bash")
+    .arguments([
+      "-c",
+      "exec bash --noprofile --rcfile .bashrc -i 2>/dev/null",
+    ])
+    .write(
+      ".bashrc",
+      indoc! {
+        r#"
+        PS1=
+        PS2=
+        eval "$(honu init bash)"
+        "#
+      },
+    )
+    .stdin("true\nfalse\nexit\n")
     .status(1)
-    .assert_execution_count(1);
-}
-
-#[test]
-#[ignore = "requires bash"]
-fn bash_search_preserves_capture() {
-  let script = include_str!("../src/shell/bash/init.bash");
-
-  Test::new()
-    .shell(Shell::Bash)
-    .stdin(formatdoc! {
-      "
-      {script}
-      _honu_preexec() {{ printf '%s\\n' \"$1\"; }}
-      _honu_search() {{ :; }}
-      history -c
-      _honu_arm
-      trap '_honu_debug \"$?\"' DEBUG
-      _honu_search
-      true
-      "
-    })
-    .stdout("true\n")
-    .success();
+    .assert_recorded(&[("true", 0, "bash"), ("false", 1, "bash")]);
 }
 
 #[test]
 #[ignore = "requires bash"]
 fn bash_preserves_scalar_prompt_command() {
   Test::new()
-    .shell(Shell::Bash)
-    .write("init.bash", include_str!("../src/shell/bash/init.bash"))
+    .program("bash")
+    .arguments([
+      "-c",
+      "exec bash --noprofile --rcfile .bashrc -i 2>/dev/null",
+    ])
     .write(
-      "case.bash",
+      ".bashrc",
       indoc! {
         r#"
         PROMPT_COMMAND='printf "%s\n" foo;'
-        source init.bash
-        trap - DEBUG
-        _honu_precmd() { printf '%s\n' precmd; }
-        _honu_arm() { printf '%s\n' arm; }
-        eval "$PROMPT_COMMAND"
+        PS1=
+        PS2=
+        eval "$(honu init bash)"
         "#
       },
     )
-    .stdin("bash --noprofile --norc -ic 'source case.bash' 2>/dev/null")
-    .stdout(indoc! {
-      "
-      precmd
-      foo
-      arm
-      "
-    })
-    .success();
-}
-
-#[test]
-#[ignore = "requires bash"]
-fn bash_uses_only_new_history() {
-  let script = include_str!("../src/shell/bash/init.bash");
-
-  Test::new()
-    .shell(Shell::Bash)
-    .stdin(formatdoc! {
-      "
-      {script}
-      _honu_preexec() {{ printf '%s\\n' \"$1\"; }}
-      history -c
-      history -s stale
-      _honu_arm
-      trap '_honu_debug \"$?\"' DEBUG
-      true
-      trap - DEBUG
-      history -s fresh
-      __honu_ready=1
-      trap '_honu_debug \"$?\"' DEBUG
-      true
-      "
-    })
-    .stdout(indoc! {
-      "
-      true
-      fresh
-      "
-    })
-    .success();
+    .stdin("true\nexit\n")
+    .stdout("foo\nfoo\n")
+    .success()
+    .assert_recorded(&[("true", 0, "bash")]);
 }
 
 #[test]
 #[ignore = "requires fish"]
 fn fish_records_execution() {
-  let script = include_str!("../src/shell/fish/init.fish");
-
   Test::new()
-    .shell(Shell::Fish)
-    .stdin(formatdoc! {
-      "
-      {script}
-      set -e fish_private_mode
-      _honu_preexec 'foo'
-      false
-      _honu_postexec
-      "
-    })
+    .program("sh")
+    .arguments(["-c", "exec fish --interactive 2>/dev/null"])
+    .write(
+      "fish/config.fish",
+      indoc! {
+        "
+        function fish_prompt
+        end
+        honu init fish | source
+        "
+      },
+    )
+    .stdin("true\nfalse\nexit\n")
     .status(1)
-    .assert_execution_count(1);
+    .assert_recorded(&[("true", 0, "fish"), ("false", 1, "fish")]);
 }
 
 #[test]
 #[ignore = "requires fish"]
 fn fish_private_mode_is_not_recorded() {
-  let script = include_str!("../src/shell/fish/init.fish");
-
   let test = Test::new()
-    .shell(Shell::Fish)
-    .stdin(formatdoc! {
-      "
-      {script}
-      set -g fish_private_mode 1
-      _honu_preexec 'foo'
-      _honu_postexec
-      "
-    })
+    .program("sh")
+    .arguments(["-c", "exec fish --interactive 2>/dev/null"])
+    .write(
+      "fish/config.fish",
+      indoc! {
+        "
+        function fish_prompt
+        end
+        set -g fish_private_mode 1
+        honu init fish | source
+        "
+      },
+    )
+    .stdin("true\nexit\n")
     .success();
 
   assert!(!test.path("honu/history.db").try_exists().unwrap());
@@ -177,21 +127,21 @@ fn init_zsh() {
 #[test]
 #[ignore = "requires zsh"]
 fn zsh_records_execution() {
-  let script = include_str!("../src/shell/zsh/init.zsh");
-
   Test::new()
-    .shell(Shell::Zsh)
-    .stdin(formatdoc! {
-      "
-      {script}
-      add-zsh-hook -d preexec _honu_preexec
-      add-zsh-hook -d precmd _honu_precmd
-      _honu_preexec 'foo'
-      false
-      _honu_precmd
-      _honu_precmd
-      "
-    })
+    .program("zsh")
+    .arguments(["-d", "-i"])
+    .write(
+      ".zshrc",
+      indoc! {
+        r#"
+        exec 2>/dev/null
+        PROMPT=
+        RPROMPT=
+        eval "$(honu init zsh)"
+        "#
+      },
+    )
+    .stdin("true\nfalse\nexit\n")
     .status(1)
-    .assert_execution_count(1);
+    .assert_recorded(&[("true", 0, "zsh"), ("false", 1, "zsh")]);
 }
