@@ -61,20 +61,17 @@ fn defaults_are_shell_specific() {
         "
       },
     )
-    .write("history", "qux\n")
     .write(".zsh_history", ": 1:0;bar\n");
 
   let home = test.path("");
 
-  let history = test.path("history");
-
   test
-    .env("HISTFILE", &history)
+    .env("HISTFILE", "")
     .env("HOME", &home)
     .arguments(["import", "zsh"])
     .expected_stdout("imported 1 execution from [ROOT]/.zsh_history\n")
     .run()
-    .env("HISTFILE", &history)
+    .env("HISTFILE", "")
     .env("HOME", &home)
     .arguments(["import", "bash"])
     .expected_stdout("imported 1 execution from [ROOT]/.bash_history\n")
@@ -180,6 +177,37 @@ fn fish() {
 }
 
 #[test]
+fn histfile_is_respected() {
+  let test = Test::new()
+    .write("bash-history", "foo\n")
+    .write("zsh-history", ": 1:0;bar\n");
+
+  let bash_history = test.path("bash-history");
+
+  let zsh_history = test.path("zsh-history");
+
+  test
+    .env("HISTFILE", &bash_history)
+    .arguments(["import", "bash"])
+    .expected_stdout("imported 1 execution from [ROOT]/bash-history\n")
+    .run()
+    .env("HISTFILE", &zsh_history)
+    .arguments(["import", "zsh"])
+    .expected_stdout("imported 1 execution from [ROOT]/zsh-history\n")
+    .run()
+    .inspect(|test| {
+      assert_eq!(
+        test
+          .executions()
+          .iter()
+          .map(|execution| execution.command.as_str())
+          .collect::<Vec<_>>(),
+        ["foo", "bar"],
+      );
+    });
+}
+
+#[test]
 fn idempotent() {
   #[track_caller]
   fn case(shell: &str, history: &str) {
@@ -220,6 +248,24 @@ fn parse_failure_does_not_partially_import() {
     .expected_stdout("imported 2 executions from history\n")
     .run()
     .inspect(|test| assert_eq!(test.executions().len(), 2));
+}
+
+#[test]
+fn path_takes_precedence_over_histfile() {
+  let test = Test::new()
+    .write("explicit", "foo\n")
+    .write("history", "bar\n");
+
+  let history = test.path("history");
+
+  test
+    .env("HISTFILE", &history)
+    .arguments(["import", "--path", "explicit", "bash"])
+    .expected_stdout("imported 1 execution from explicit\n")
+    .run()
+    .inspect(|test| {
+      assert_eq!(test.executions()[0].command, "foo");
+    });
 }
 
 #[test]
