@@ -54,16 +54,20 @@ impl Search {
     let options = SkimOptionsBuilder::default()
       .color(
         "none,\
-         current:6:bold,\
-         matched:-1:underlined,\
-         current_match:6:bold:underlined,\
-         info:-1:dim,\
-         spinner:-1:dim",
+          current:6:bold,\
+          matched:-1:underlined,\
+          current_match:6:bold:underlined,\
+          query:6:bold,\
+          prompt:6:bold,\
+          cursor:6:bold,\
+          info:-1:dim,\
+          spinner:-1:dim",
       )
-      .height("40%")
-      .info("left")
+      .height("60%")
+      .info("right")
       .multi(false)
       .multi_select_icon("")
+      .prompt("> ")
       .query(&self.query)
       .selector_icon("")
       .build()?;
