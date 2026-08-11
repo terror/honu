@@ -119,7 +119,11 @@ impl Shell {
 
     let inserted = result?;
 
-    println!("imported {inserted} executions from {}", path.display());
+    println!(
+      "imported {inserted} {} from {}",
+      Count("execution", inserted),
+      path.display()
+    );
 
     Ok(())
   }
