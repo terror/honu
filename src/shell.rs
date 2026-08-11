@@ -41,7 +41,9 @@ impl Shell {
           .filter(|path| !path.is_empty())
           .map(PathBuf::from)
           .map(|path| path.join("fish/fish_history")),
-        Self::Bash | Self::Zsh => None,
+        Self::Bash | Self::Zsh => env::var_os("HISTFILE")
+          .filter(|path| !path.is_empty())
+          .map(PathBuf::from),
       })
       .or_else(|| {
         env::var_os("HOME")
@@ -52,7 +54,7 @@ impl Shell {
       .with_context(|| match self {
         Self::Fish => "failed to determine fish history path; pass --path or set XDG_DATA_HOME or HOME".into(),
         Self::Bash | Self::Zsh => format!(
-          "failed to determine {} history path; pass --path or set HOME",
+          "failed to determine {} history path; pass --path or set HISTFILE or HOME",
           self.format(),
         ),
       })
