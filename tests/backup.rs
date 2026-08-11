@@ -12,7 +12,18 @@ fn backup() {
     .run()
     .arguments(["backup", "foo/bar/honu.sqlite"])
     .run()
-    .assert_database("foo/bar/honu.sqlite", 1);
+    .inspect(|test| {
+      let database = test.database_at("foo/bar/honu.sqlite");
+
+      assert_eq!(
+        database
+          .query_row("SELECT COUNT(*) FROM executions", [], |row| {
+            row.get::<_, i64>(0)
+          })
+          .unwrap(),
+        1,
+      );
+    });
 
   #[cfg(unix)]
   assert_eq!(
@@ -46,7 +57,18 @@ fn backup() {
     .run()
     .arguments(["backup", "--force", "foo/bar/honu.sqlite"])
     .run()
-    .assert_database("foo/bar/honu.sqlite", 2);
+    .inspect(|test| {
+      let database = test.database_at("foo/bar/honu.sqlite");
+
+      assert_eq!(
+        database
+          .query_row("SELECT COUNT(*) FROM executions", [], |row| {
+            row.get::<_, i64>(0)
+          })
+          .unwrap(),
+        2,
+      );
+    });
 }
 
 #[test]
@@ -79,6 +101,17 @@ fn backup_is_usable_application_database() {
     .arguments(["import", "--path", "history", "zsh"])
     .expected_stdout("imported 1 executions from history\n")
     .run()
-    .assert_execution_count(1)
-    .assert_database("backup/honu/history.db", 2);
+    .inspect(|test| assert_eq!(test.executions().len(), 1))
+    .inspect(|test| {
+      let database = test.database_at("backup/honu/history.db");
+
+      assert_eq!(
+        database
+          .query_row("SELECT COUNT(*) FROM executions", [], |row| {
+            row.get::<_, i64>(0)
+          })
+          .unwrap(),
+        2,
+      );
+    });
 }

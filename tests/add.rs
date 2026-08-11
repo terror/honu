@@ -9,10 +9,15 @@ fn defaults() {
   test
     .arguments(["add", "--timestamp-ns", "1", "--", "foo"])
     .run()
-    .assert_executions([Execution {
-      directory: Some(directory),
-      ..Execution::new("foo", 1)
-    }]);
+    .inspect(|test| {
+      assert_eq!(
+        test.executions(),
+        [Execution {
+          directory: Some(directory),
+          ..Execution::new("foo", 1)
+        }],
+      );
+    });
 }
 
 #[test]
@@ -38,13 +43,18 @@ fn record() {
       "foo",
     ])
     .run()
-    .assert_executions([Execution {
-      directory: Some("/foo".into()),
-      duration_ns: Some(2),
-      exit_code: Some(0),
-      hostname: Some("foo".into()),
-      session: Some("bar".into()),
-      shell: Some("zsh".into()),
-      ..Execution::new("foo", 1)
-    }]);
+    .inspect(|test| {
+      assert_eq!(
+        test.executions(),
+        [Execution {
+          directory: Some("/foo".into()),
+          duration_ns: Some(2),
+          exit_code: Some(0),
+          hostname: Some("foo".into()),
+          session: Some("bar".into()),
+          shell: Some("zsh".into()),
+          ..Execution::new("foo", 1)
+        }],
+      );
+    });
 }

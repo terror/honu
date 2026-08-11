@@ -13,11 +13,11 @@ fn clear() {
   let test = test
     .argument("clear")
     .run()
-    .assert_executions([])
+    .inspect(|test| assert!(test.executions().is_empty()))
     .arguments(["import", "--path", "history", "zsh"])
     .expected_stdout("imported 1 executions from history\n")
     .run()
-    .assert_execution_count(1);
+    .inspect(|test| assert_eq!(test.executions().len(), 1));
 
   assert_ne!(test.execution_id("foo"), id);
 }

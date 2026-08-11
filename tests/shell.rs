@@ -33,7 +33,18 @@ fn bash_preserves_scalar_prompt_command() {
     .stdin("true\nexit\n")
     .expected_stdout("foo\nfoo\n")
     .run()
-    .assert_recorded(&[("true", 0, "bash")]);
+    .inspect(|test| {
+      assert_eq!(
+        test
+          .executions()
+          .into_iter()
+          .map(|execution| {
+            (execution.command, execution.exit_code, execution.shell)
+          })
+          .collect::<Vec<_>>(),
+        [("true".into(), Some(0), Some("bash".into()))],
+      );
+    });
 }
 
 #[test]
@@ -58,7 +69,25 @@ fn bash_records_execution() {
     .stdin("true\nfalse\nexit\n")
     .expected_status(1)
     .run()
-    .assert_recorded(&[("true", 0, "bash"), ("false", 1, "bash")]);
+    .inspect(|test| {
+      let mut executions = test
+        .executions()
+        .into_iter()
+        .map(|execution| {
+          (execution.command, execution.exit_code, execution.shell)
+        })
+        .collect::<Vec<_>>();
+
+      executions.sort();
+
+      assert_eq!(
+        executions,
+        [
+          ("false".into(), Some(1), Some("bash".into())),
+          ("true".into(), Some(0), Some("bash".into())),
+        ],
+      );
+    });
 }
 
 #[test]
@@ -87,7 +116,7 @@ fn fish_private_mode_is_not_recorded() {
       "
     })
     .run()
-    .assert_execution_count(0);
+    .inspect(|test| assert_eq!(test.executions().len(), 0));
 }
 
 #[test]
@@ -109,7 +138,25 @@ fn fish_records_execution() {
       "
     })
     .run()
-    .assert_recorded(&[("true", 0, "fish"), ("false", 1, "fish")]);
+    .inspect(|test| {
+      let mut executions = test
+        .executions()
+        .into_iter()
+        .map(|execution| {
+          (execution.command, execution.exit_code, execution.shell)
+        })
+        .collect::<Vec<_>>();
+
+      executions.sort();
+
+      assert_eq!(
+        executions,
+        [
+          ("false".into(), Some(1), Some("fish".into())),
+          ("true".into(), Some(0), Some("fish".into())),
+        ],
+      );
+    });
 }
 
 #[test]
@@ -142,5 +189,23 @@ fn zsh_records_execution() {
     .stdin("true\nfalse\nexit\n")
     .expected_status(1)
     .run()
-    .assert_recorded(&[("true", 0, "zsh"), ("false", 1, "zsh")]);
+    .inspect(|test| {
+      let mut executions = test
+        .executions()
+        .into_iter()
+        .map(|execution| {
+          (execution.command, execution.exit_code, execution.shell)
+        })
+        .collect::<Vec<_>>();
+
+      executions.sort();
+
+      assert_eq!(
+        executions,
+        [
+          ("false".into(), Some(1), Some("zsh".into())),
+          ("true".into(), Some(0), Some("zsh".into())),
+        ],
+      );
+    });
 }
