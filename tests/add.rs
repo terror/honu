@@ -13,8 +13,10 @@ fn defaults() {
       assert_eq!(
         test.executions(),
         [Execution {
+          command: "foo".into(),
           directory: Some(directory),
-          ..Execution::new("foo", 1)
+          timestamp_ns: 1,
+          ..Default::default()
         }],
       );
     });
@@ -47,13 +49,14 @@ fn record() {
       assert_eq!(
         test.executions(),
         [Execution {
+          command: "foo".into(),
           directory: Some("/foo".into()),
           duration_ns: Some(2),
           exit_code: Some(0),
           hostname: Some("foo".into()),
           session: Some("bar".into()),
           shell: Some("zsh".into()),
-          ..Execution::new("foo", 1)
+          timestamp_ns: 1,
         }],
       );
     });

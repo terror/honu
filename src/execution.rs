@@ -1,26 +1,29 @@
 use super::*;
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
-pub(crate) struct Execution {
-  pub(crate) command: String,
-  pub(crate) directory: Option<PathBuf>,
-  pub(crate) duration_ns: Option<i64>,
-  pub(crate) exit_code: Option<i32>,
-  pub(crate) hostname: Option<String>,
-  pub(crate) session: Option<String>,
-  pub(crate) shell: Option<String>,
-  pub(crate) timestamp_ns: i64,
+pub struct Execution {
+  pub command: String,
+  pub directory: Option<PathBuf>,
+  pub duration_ns: Option<i64>,
+  pub exit_code: Option<i32>,
+  pub hostname: Option<String>,
+  pub session: Option<String>,
+  pub shell: Option<String>,
+  pub timestamp_ns: i64,
 }
 
 impl Execution {
-  pub(crate) fn directory(&self) -> Result<Option<&str>> {
+  /// Returns the execution directory as UTF-8.
+  ///
+  /// # Errors
+  ///
+  /// Returns an error if the directory is not valid UTF-8.
+  pub fn directory(&self) -> Result<Option<&str>> {
     self
       .directory
       .as_deref()
       .map(|directory| {
-        directory
-          .to_str()
-          .context("execution directory is not valid UTF-8")
+        directory.to_str().ok_or(Error::InvalidExecutionDirectory)
       })
       .transpose()
   }
