@@ -3,13 +3,13 @@ use super::*;
 const NANOSECONDS_PER_SECOND: i64 = 1_000_000_000;
 
 #[derive(Default)]
-pub(crate) struct Parser {
+pub(crate) struct FishParser {
   command: Option<Vec<u8>>,
   plain_timestamp_ns: i64,
   timestamp: Option<(Vec<u8>, usize)>,
 }
 
-impl Parser {
+impl FishParser {
   fn complete(&mut self) -> Result<Option<Record>> {
     let Some(command) = self.command.take() else {
       return Ok(None);
@@ -86,7 +86,7 @@ impl Parser {
   }
 }
 
-impl crate::parser::Parser for Parser {
+impl Parser for FishParser {
   fn finish(&mut self) -> Result<Option<Record>> {
     self.complete()
   }
