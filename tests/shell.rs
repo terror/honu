@@ -76,7 +76,11 @@ fn fish_records_execution() {
     )
     .stdin("true\nfalse\nexit\n")
     .status(1)
-    .assert_recorded(&[("true", 0, "fish"), ("false", 1, "fish")]);
+    .assert_recorded(&[
+      ("true", 0, "fish"),
+      ("false", 1, "fish"),
+      ("exit", 1, "fish"),
+    ]);
 }
 
 #[test]
