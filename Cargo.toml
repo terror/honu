@@ -1,9 +1,17 @@
 [package]
 name = "honu"
-version = "0.1.0"
-edition = "2024"
+version = "0.1.1"
 description = "Back up and search shell history with SQLite"
+authors = ["Liam <liam@scalzulli.com>"]
+license = "CC0-1.0"
+homepage = "https://github.com/terror/honu"
+repository = "https://github.com/terror/honu"
+edition = "2024"
+categories = ["command-line-utilities", "database"]
+keywords = ["shell", "history", "sqlite", "backup", "cli"]
+resolver = "2"
 autotests = false
+include = ["/LICENSE", "/README.md", "/migrations/", "/src/", "/tests/"]
 
 [workspace]
 members = [".", "crates/*"]
@@ -20,6 +28,10 @@ wildcard_imports = "allow"
 [lints]
 workspace = true
 
+[profile.release]
+codegen-units = 1
+lto = true
+
 [dependencies]
 anyhow = "1.0.104"
 clap = { version = "4.6.5", features = ["derive"] }
@@ -29,6 +41,7 @@ ratatui = "0.30.0"
 rusqlite = { version = "0.40.1", features = ["backup", "bundled"] }
 skim = { version = "5.6.1", default-features = false, features = ["cli"] }
 tempfile = "3.27.0"
+thiserror = "2.0.18"
 unicode-display-width = "0.3.0"
 unicode-segmentation = "1.12.0"
 uuid = { version = "1.24.0", features = ["v4"] }

@@ -68,7 +68,10 @@ _honu_debug() {
   local exit_code="$1"
   local command="$BASH_COMMAND"
 
-  if [[ -z "$__honu_ready" || "$command" == _honu_precmd || "$command" == _honu_arm ]]; then
+  if [[ -z "$__honu_ready" ||
+    "$command" == _honu_precmd ||
+    "$command" == _honu_arm ||
+    "$command" == _honu_search ]]; then
     return "$exit_code"
   fi
 
@@ -121,7 +124,9 @@ _honu_debug \"\$?\"" DEBUG
   if [[ "$(declare -p PROMPT_COMMAND 2>/dev/null)" == "declare -a"* ]]; then
     PROMPT_COMMAND=(_honu_precmd "${PROMPT_COMMAND[@]}" _honu_arm)
   else
-    PROMPT_COMMAND="_honu_precmd${PROMPT_COMMAND:+;$PROMPT_COMMAND};_honu_arm"
+    PROMPT_COMMAND="_honu_precmd
+${PROMPT_COMMAND-}
+_honu_arm"
   fi
 
   bind -x '"\C-r":_honu_search'

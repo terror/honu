@@ -1,6 +1,8 @@
 use super::*;
 
-pub(super) mod parser;
+pub(super) use parser::BashParser;
+
+mod parser;
 
 pub(super) const DEFAULT_HISTORY_FILE: &str = ".bash_history";
 pub(super) const FORMAT: &str = "bash";

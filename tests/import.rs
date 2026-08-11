@@ -17,28 +17,60 @@ fn bash() {
       },
     )
     .arguments(["import", "--path", "history", "bash"])
-    .stdout("imported 2 executions from history\n")
-    .success()
-    .assert_executions([
-      Execution {
-        shell: Some("bash".into()),
-        ..Execution::new(
-          indoc! {
-            r#"
-            for foo in bar; do
-              echo "$foo"
-            done
-            "#
-          }
-          .trim_end(),
-          1_700_000_000_000_000_000,
-        )
-      },
-      Execution {
-        shell: Some("bash".into()),
-        ..Execution::new("cargo test", 1_700_000_001_000_000_000)
-      },
-    ]);
+    .expected_stdout("imported 2 executions from history\n")
+    .run()
+    .inspect(|test| {
+      assert_eq!(
+        test.executions(),
+        [
+          Execution {
+            command: indoc! {
+              r#"
+              for foo in bar; do
+                echo "$foo"
+              done
+              "#
+            }
+            .trim_end()
+            .into(),
+            shell: Some("bash".into()),
+            timestamp_ns: 1_700_000_000_000_000_000,
+            ..Default::default()
+          },
+          Execution {
+            command: "cargo test".into(),
+            shell: Some("bash".into()),
+            timestamp_ns: 1_700_000_001_000_000_000,
+            ..Default::default()
+          },
+        ]
+      );
+    });
+}
+
+#[test]
+fn detection_failure_is_actionable() {
+  Test::new()
+    .env("SHELL", "/bin/elvish")
+    .argument("import")
+    .expected_stderr(
+      "error: unsupported shell `/bin/elvish`; pass bash, fish, or zsh\n",
+    )
+    .expected_status(1)
+    .run();
+}
+
+#[test]
+fn detects_shell() {
+  Test::new()
+    .write("history", ": 1:0;foo\n")
+    .env("SHELL", "/bin/zsh")
+    .arguments(["import", "--path", "history"])
+    .expected_stdout("imported 1 execution from history\n")
+    .run()
+    .inspect(|test| {
+      assert_eq!(test.executions()[0].shell.as_deref(), Some("zsh"));
+    });
 }
 
 #[test]
@@ -54,43 +86,51 @@ fn defaults_are_shell_specific() {
         "
       },
     )
-    .write("history", "qux\n")
     .write(".zsh_history", ": 1:0;bar\n");
 
   let home = test.path("");
 
-  let history = test.path("history");
-
   test
-    .env("HISTFILE", &history)
+    .env("HISTFILE", "")
     .env("HOME", &home)
     .arguments(["import", "zsh"])
-    .stdout("imported 1 executions from [ROOT]/.zsh_history\n")
-    .success()
-    .env("HISTFILE", &history)
+    .expected_stdout("imported 1 execution from [ROOT]/.zsh_history\n")
+    .run()
+    .env("HISTFILE", "")
     .env("HOME", &home)
     .arguments(["import", "bash"])
-    .stdout("imported 1 executions from [ROOT]/.bash_history\n")
-    .success()
+    .expected_stdout("imported 1 execution from [ROOT]/.bash_history\n")
+    .run()
     .env("HOME", &home)
     .arguments(["import", "fish"])
-    .stdout("imported 1 executions from [ROOT]/fish/fish_history\n")
-    .success()
-    .assert_executions([
-      Execution {
-        shell: Some("bash".into()),
-        ..Execution::new("foo", 1)
-      },
-      Execution {
-        duration_ns: Some(0),
-        shell: Some("zsh".into()),
-        ..Execution::new("bar", 1_000_000_000)
-      },
-      Execution {
-        shell: Some("fish".into()),
-        ..Execution::new("baz", 2_000_000_000)
-      },
-    ]);
+    .expected_stdout("imported 1 execution from [ROOT]/fish/fish_history\n")
+    .run()
+    .inspect(|test| {
+      assert_eq!(
+        test.executions(),
+        [
+          Execution {
+            command: "foo".into(),
+            shell: Some("bash".into()),
+            timestamp_ns: 1,
+            ..Default::default()
+          },
+          Execution {
+            command: "bar".into(),
+            duration_ns: Some(0),
+            shell: Some("zsh".into()),
+            timestamp_ns: 1_000_000_000,
+            ..Default::default()
+          },
+          Execution {
+            command: "baz".into(),
+            shell: Some("fish".into()),
+            timestamp_ns: 2_000_000_000,
+            ..Default::default()
+          },
+        ]
+      );
+    });
 }
 
 #[test]
@@ -99,18 +139,18 @@ fn distinct_sources_are_tracked_independently() {
     .write("foo", "bar\n")
     .write("baz", "bar\n")
     .arguments(["import", "--path", "foo", "zsh"])
-    .stdout("imported 1 executions from foo\n")
-    .success()
+    .expected_stdout("imported 1 execution from foo\n")
+    .run()
     .arguments(["import", "--path", "baz", "zsh"])
-    .stdout("imported 1 executions from baz\n")
-    .success()
+    .expected_stdout("imported 1 execution from baz\n")
+    .run()
     .arguments(["import", "--path", "foo", "zsh"])
-    .stdout("imported 0 executions from foo\n")
-    .success()
+    .expected_stdout("imported 0 executions from foo\n")
+    .run()
     .arguments(["import", "--path", "baz", "zsh"])
-    .stdout("imported 0 executions from baz\n")
-    .success()
-    .assert_execution_count(2);
+    .expected_stdout("imported 0 executions from baz\n")
+    .run()
+    .inspect(|test| assert_eq!(test.executions().len(), 2));
 }
 
 #[test]
@@ -130,28 +170,66 @@ fn fish() {
       },
     )
     .arguments(["import", "--path", "history", "fish"])
-    .stdout("imported 2 executions from history\n")
-    .success()
-    .assert_executions([
-      Execution {
-        shell: Some("fish".into()),
-        ..Execution::new("git status", 1_700_000_000_000_000_000)
-      },
-      Execution {
-        shell: Some("fish".into()),
-        ..Execution::new(
-          indoc! {
-            "
+    .expected_stdout("imported 2 executions from history\n")
+    .run()
+    .inspect(|test| {
+      assert_eq!(
+        test.executions(),
+        [
+          Execution {
+            command: "git status".into(),
+            shell: Some("fish".into()),
+            timestamp_ns: 1_700_000_000_000_000_000,
+            ..Default::default()
+          },
+          Execution {
+            command: indoc! {
+              "
             for foo in bar
                 echo $foo
             end
             "
-          }
-          .trim_end(),
-          1_700_000_001_000_000_000,
-        )
-      },
-    ]);
+            }
+            .trim_end()
+            .into(),
+            shell: Some("fish".into()),
+            timestamp_ns: 1_700_000_001_000_000_000,
+            ..Default::default()
+          },
+        ]
+      );
+    });
+}
+
+#[test]
+fn histfile_is_respected() {
+  let test = Test::new()
+    .write("bash-history", "foo\n")
+    .write("zsh-history", ": 1:0;bar\n");
+
+  let bash_history = test.path("bash-history");
+
+  let zsh_history = test.path("zsh-history");
+
+  test
+    .env("HISTFILE", &bash_history)
+    .arguments(["import", "bash"])
+    .expected_stdout("imported 1 execution from [ROOT]/bash-history\n")
+    .run()
+    .env("HISTFILE", &zsh_history)
+    .arguments(["import", "zsh"])
+    .expected_stdout("imported 1 execution from [ROOT]/zsh-history\n")
+    .run()
+    .inspect(|test| {
+      assert_eq!(
+        test
+          .executions()
+          .iter()
+          .map(|execution| execution.command.as_str())
+          .collect::<Vec<_>>(),
+        ["foo", "bar"],
+      );
+    });
 }
 
 #[test]
@@ -161,12 +239,12 @@ fn idempotent() {
     Test::new()
       .write("history", history)
       .arguments(["import", "--path", "history", shell])
-      .stdout("imported 2 executions from history\n")
-      .success()
+      .expected_stdout("imported 2 executions from history\n")
+      .run()
       .arguments(["import", "--path", "history", shell])
-      .stdout("imported 0 executions from history\n")
-      .success()
-      .assert_execution_count(2);
+      .expected_stdout("imported 0 executions from history\n")
+      .run()
+      .inspect(|test| assert_eq!(test.executions().len(), 2));
   }
 
   case("bash", "#1\nfoo\n#2\nbar\n");
@@ -179,16 +257,40 @@ fn parse_failure_does_not_partially_import() {
   Test::new()
     .write("history", "#1\nfoo\n#9223372037\nbar\n")
     .arguments(["import", "--path", "history", "bash"])
-    .stderr(
-      "error: failed to parse Bash history `history`\n\nbecause:\n- timestamp on history line 3 overflows nanoseconds\n",
-    )
-    .failure()
-    .assert_execution_count(0)
+    .expected_stderr(indoc! {
+      "
+      error: failed to parse Bash history `history`
+
+      because:
+      - timestamp on history line 3 overflows nanoseconds
+      "
+    })
+    .expected_status(1)
+    .run()
+    .inspect(|test| assert_eq!(test.executions().len(), 0))
     .write("history", "#1\nfoo\n#2\nbar\n")
     .arguments(["import", "--path", "history", "bash"])
-    .stdout("imported 2 executions from history\n")
-    .success()
-    .assert_execution_count(2);
+    .expected_stdout("imported 2 executions from history\n")
+    .run()
+    .inspect(|test| assert_eq!(test.executions().len(), 2));
+}
+
+#[test]
+fn path_takes_precedence_over_histfile() {
+  let test = Test::new()
+    .write("explicit", "foo\n")
+    .write("history", "bar\n");
+
+  let history = test.path("history");
+
+  test
+    .env("HISTFILE", &history)
+    .arguments(["import", "--path", "explicit", "bash"])
+    .expected_stdout("imported 1 execution from explicit\n")
+    .run()
+    .inspect(|test| {
+      assert_eq!(test.executions()[0].command, "foo");
+    });
 }
 
 #[test]
@@ -196,8 +298,8 @@ fn reconciles_insertions_with_existing_executions() {
   let test = Test::new()
     .write("history", "foo\nbar\n")
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 2 executions from history\n")
-    .success();
+    .expected_stdout("imported 2 executions from history\n")
+    .run();
 
   let foo = test.execution_id("foo");
   let bar = test.execution_id("bar");
@@ -205,26 +307,39 @@ fn reconciles_insertions_with_existing_executions() {
   let test = test
     .write("history", "baz\nfoo\nqux\nbar\n")
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 2 executions from history\n")
-    .success()
-    .assert_executions([
-      Execution {
-        shell: Some("zsh".into()),
-        ..Execution::new("baz", 1)
-      },
-      Execution {
-        shell: Some("zsh".into()),
-        ..Execution::new("foo", 2)
-      },
-      Execution {
-        shell: Some("zsh".into()),
-        ..Execution::new("qux", 3)
-      },
-      Execution {
-        shell: Some("zsh".into()),
-        ..Execution::new("bar", 4)
-      },
-    ]);
+    .expected_stdout("imported 2 executions from history\n")
+    .run()
+    .inspect(|test| {
+      assert_eq!(
+        test.executions(),
+        [
+          Execution {
+            command: "baz".into(),
+            shell: Some("zsh".into()),
+            timestamp_ns: 1,
+            ..Default::default()
+          },
+          Execution {
+            command: "foo".into(),
+            shell: Some("zsh".into()),
+            timestamp_ns: 2,
+            ..Default::default()
+          },
+          Execution {
+            command: "qux".into(),
+            shell: Some("zsh".into()),
+            timestamp_ns: 3,
+            ..Default::default()
+          },
+          Execution {
+            command: "bar".into(),
+            shell: Some("zsh".into()),
+            timestamp_ns: 4,
+            ..Default::default()
+          },
+        ]
+      );
+    });
 
   assert_eq!(test.execution_id("foo"), foo);
   assert_eq!(test.execution_id("bar"), bar);
@@ -235,16 +350,16 @@ fn repeated_commands_are_reconciled_by_occurrence() {
   Test::new()
     .write("history", "foo\nfoo\n")
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 2 executions from history\n")
-    .success()
+    .expected_stdout("imported 2 executions from history\n")
+    .run()
     .write("history", "foo\nfoo\nfoo\n")
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 1 executions from history\n")
-    .success()
+    .expected_stdout("imported 1 execution from history\n")
+    .run()
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 0 executions from history\n")
-    .success()
-    .assert_execution_count(3);
+    .expected_stdout("imported 0 executions from history\n")
+    .run()
+    .inspect(|test| assert_eq!(test.executions().len(), 3));
 }
 
 #[test]
@@ -252,8 +367,8 @@ fn truncated_records_are_retained() {
   let test = Test::new()
     .write("history", "foo\nbar\nbaz\n")
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 3 executions from history\n")
-    .success();
+    .expected_stdout("imported 3 executions from history\n")
+    .run();
 
   let bar = test.execution_id("bar");
   let baz = test.execution_id("baz");
@@ -261,9 +376,9 @@ fn truncated_records_are_retained() {
   let test = test
     .write("history", "bar\nbaz\n")
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 0 executions from history\n")
-    .success()
-    .assert_execution_count(3);
+    .expected_stdout("imported 0 executions from history\n")
+    .run()
+    .inspect(|test| assert_eq!(test.executions().len(), 3));
 
   assert_eq!(test.execution_id("bar"), bar);
   assert_eq!(test.execution_id("baz"), baz);
@@ -282,17 +397,26 @@ fn zsh() {
       },
     )
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 2 executions from history\n")
-    .success()
-    .assert_executions([
-      Execution {
-        shell: Some("zsh".into()),
-        ..Execution::new("git status", 1)
-      },
-      Execution {
-        duration_ns: Some(2_000_000_000),
-        shell: Some("zsh".into()),
-        ..Execution::new("cargo test", 1_700_000_000_000_000_000)
-      },
-    ]);
+    .expected_stdout("imported 2 executions from history\n")
+    .run()
+    .inspect(|test| {
+      assert_eq!(
+        test.executions(),
+        [
+          Execution {
+            command: "git status".into(),
+            shell: Some("zsh".into()),
+            timestamp_ns: 1,
+            ..Default::default()
+          },
+          Execution {
+            command: "cargo test".into(),
+            duration_ns: Some(2_000_000_000),
+            shell: Some("zsh".into()),
+            timestamp_ns: 1_700_000_000_000_000_000,
+            ..Default::default()
+          },
+        ]
+      );
+    });
 }

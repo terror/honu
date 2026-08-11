@@ -6,8 +6,8 @@ fn shells() {
   fn case(shell: &str, expected: &str) {
     Test::new()
       .arguments(["init", shell])
-      .stdout(&expected.replace('\\', "/"))
-      .success();
+      .expected_stdout(&expected.replace('\\', "/"))
+      .run();
   }
 
   case("bash", include_str!("../src/shell/bash/init.bash"));

@@ -4,11 +4,14 @@ use super::*;
 pub(crate) struct Import {
   #[arg(long, value_name = "PATH")]
   path: Option<PathBuf>,
-  shell: Shell,
+  shell: Option<Shell>,
 }
 
 impl Import {
   pub(crate) fn run(self, database: &Database) -> Result {
-    self.shell.import(database, self.path.as_deref())
+    self
+      .shell
+      .map_or_else(Shell::detect, Ok)?
+      .import(database, self.path.as_deref())
   }
 }

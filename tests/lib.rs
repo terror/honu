@@ -1,7 +1,7 @@
 use {
   anyhow::Context,
-  indoc::{formatdoc, indoc},
-  pretty_assertions::assert_eq as pretty_assert_eq,
+  honu::Execution,
+  indoc::indoc,
   rusqlite::Connection,
   std::{
     env,
@@ -16,6 +16,9 @@ use {
   tempfile::TempDir,
 };
 
+#[macro_use]
+extern crate pretty_assertions;
+
 mod add;
 mod backup;
 mod clear;
@@ -25,58 +28,12 @@ mod list;
 mod search;
 mod shell;
 
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
-struct Execution {
-  command: String,
-  directory: Option<PathBuf>,
-  duration_ns: Option<i64>,
-  exit_code: Option<i32>,
-  hostname: Option<String>,
-  session: Option<String>,
-  shell: Option<String>,
-  timestamp_ns: i64,
-}
-
-impl Execution {
-  fn new(command: &str, timestamp_ns: i64) -> Self {
-    Self {
-      command: command.into(),
-      timestamp_ns,
-      ..Default::default()
-    }
-  }
-}
-
-#[derive(Clone, Copy)]
-enum Shell {
-  Bash,
-  Fish,
-  Zsh,
-}
-
-impl Shell {
-  fn arguments(self) -> &'static [&'static str] {
-    match self {
-      Self::Bash => &["--noprofile", "--norc"],
-      Self::Fish => &["--no-config"],
-      Self::Zsh => &["-f"],
-    }
-  }
-
-  fn name(self) -> &'static str {
-    match self {
-      Self::Bash => "bash",
-      Self::Fish => "fish",
-      Self::Zsh => "zsh",
-    }
-  }
-}
-
 #[derive(Debug)]
 struct Test {
   arguments: Vec<OsString>,
   environments: Vec<(OsString, OsString)>,
   executable: OsString,
+  expected_status: i32,
   expected_stderr: String,
   expected_stdout: String,
   stdin: Option<Vec<u8>>,
@@ -104,56 +61,12 @@ impl Test {
     self
   }
 
-  fn assert_database(self, path: impl AsRef<Path>, executions: i64) -> Self {
-    let connection = Connection::open(self.path(path)).unwrap();
-
-    pretty_assert_eq!(
-      (
-        connection
-          .query_row("PRAGMA integrity_check", [], |row| row
-            .get::<_, String>(0))
-          .unwrap(),
-        connection
-          .query_row("SELECT COUNT(*) FROM executions", [], |row| {
-            row.get::<_, i64>(0)
-          })
-          .unwrap(),
-      ),
-      ("ok".into(), executions),
-    );
-
-    self
-  }
-
-  fn assert_execution_count(self, expected: i64) -> Self {
-    pretty_assert_eq!(
-      self
-        .database()
-        .query_row("SELECT COUNT(*) FROM executions", [], |row| {
-          row.get::<_, i64>(0)
-        })
-        .unwrap(),
-      expected,
-    );
-
-    self
-  }
-
-  #[track_caller]
-  fn assert_executions(
-    self,
-    expected: impl IntoIterator<Item = Execution>,
-  ) -> Self {
-    pretty_assert_eq!(
-      self.executions(),
-      expected.into_iter().collect::<Vec<_>>(),
-    );
-
-    self
-  }
-
   fn database(&self) -> Connection {
-    Connection::open(self.path("honu/history.db")).unwrap()
+    self.database_at("honu/history.db")
+  }
+
+  fn database_at(&self, path: impl AsRef<Path>) -> Connection {
+    Connection::open(self.path(path)).unwrap()
   }
 
   fn env(mut self, key: impl AsRef<OsStr>, value: impl AsRef<OsStr>) -> Self {
@@ -215,9 +128,26 @@ impl Test {
       .unwrap()
   }
 
-  #[track_caller]
-  fn failure(self) -> Self {
-    self.status(1)
+  fn expected_status(mut self, expected_status: i32) -> Self {
+    self.expected_status = expected_status;
+    self
+  }
+
+  fn expected_stderr(mut self, expected_stderr: &str) -> Self {
+    assert!(self.expected_stderr.is_empty());
+    self.expected_stderr = expected_stderr.into();
+    self
+  }
+
+  fn expected_stdout(mut self, expected_stdout: &str) -> Self {
+    assert!(self.expected_stdout.is_empty());
+    self.expected_stdout = expected_stdout.into();
+    self
+  }
+
+  fn inspect(self, inspect: impl FnOnce(&Self)) -> Self {
+    inspect(&self);
+    self
   }
 
   fn new() -> Self {
@@ -233,7 +163,10 @@ impl Test {
     self
   }
 
-  fn shell(self, shell: Shell) -> Self {
+  #[track_caller]
+  fn run(self) -> Self {
+    let mut command = Command::new(&self.executable);
+
     let path = env::join_paths(
       once(
         Path::new(env!("CARGO_BIN_EXE_honu"))
@@ -245,19 +178,13 @@ impl Test {
     )
     .unwrap();
 
-    self
-      .program(shell.name())
-      .arguments(shell.arguments())
-      .env("PATH", path)
-  }
-
-  #[track_caller]
-  fn status(self, expected_status: i32) -> Self {
-    let mut command = Command::new(&self.executable);
-
     command
       .current_dir(self.tempdir.path())
+      .env("HOME", self.tempdir.path())
+      .env("XDG_CONFIG_HOME", self.tempdir.path())
       .env("XDG_DATA_HOME", self.tempdir.path())
+      .env("ZDOTDIR", self.tempdir.path())
+      .env("PATH", path)
       .args(&self.arguments)
       .stdin(Stdio::piped())
       .stdout(Stdio::piped())
@@ -288,25 +215,19 @@ impl Test {
 
     let stderr = normalize(str::from_utf8(&output.stderr).unwrap());
 
-    pretty_assert_eq!(
+    assert_eq!(
       output.status.code(),
-      Some(expected_status),
+      Some(self.expected_status),
       "unexpected exit status\nstderr: {stderr}",
     );
 
-    pretty_assert_eq!(stderr, self.expected_stderr);
+    assert_eq!(stderr, self.expected_stderr);
 
     let stdout = normalize(str::from_utf8(&output.stdout).unwrap());
 
-    pretty_assert_eq!(stdout, self.expected_stdout);
+    assert_eq!(stdout, self.expected_stdout);
 
     Self::with_tempdir(self.tempdir)
-  }
-
-  fn stderr(mut self, expected_stderr: &str) -> Self {
-    assert!(self.expected_stderr.is_empty());
-    self.expected_stderr = expected_stderr.into();
-    self
   }
 
   fn stdin(mut self, stdin: impl AsRef<[u8]>) -> Self {
@@ -315,22 +236,12 @@ impl Test {
     self
   }
 
-  fn stdout(mut self, expected_stdout: &str) -> Self {
-    assert!(self.expected_stdout.is_empty());
-    self.expected_stdout = expected_stdout.into();
-    self
-  }
-
-  #[track_caller]
-  fn success(self) -> Self {
-    self.status(0)
-  }
-
   fn with_tempdir(tempdir: TempDir) -> Self {
     Self {
       arguments: Vec::new(),
       environments: Vec::new(),
       executable: env!("CARGO_BIN_EXE_honu").into(),
+      expected_status: 0,
       expected_stderr: String::new(),
       expected_stdout: String::new(),
       stdin: None,

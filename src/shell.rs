@@ -1,4 +1,9 @@
-use super::*;
+use {
+  super::*,
+  bash::BashParser,
+  fish::FishParser,
+  zsh::{Metafied, ZshParser},
+};
 
 mod bash;
 mod fish;
@@ -12,6 +17,22 @@ pub(super) enum Shell {
 }
 
 impl Shell {
+  pub(super) fn detect() -> Result<Self> {
+    let shell = env::var_os("SHELL")
+      .filter(|shell| !shell.is_empty())
+      .context("failed to detect shell; pass bash, fish, or zsh")?;
+
+    match Path::new(&shell).file_name().and_then(|name| name.to_str()) {
+      Some("bash") => Ok(Self::Bash),
+      Some("fish") => Ok(Self::Fish),
+      Some("zsh") => Ok(Self::Zsh),
+      _ => bail!(
+        "unsupported shell `{}`; pass bash, fish, or zsh",
+        shell.to_string_lossy(),
+      ),
+    }
+  }
+
   pub(super) fn format(self) -> &'static str {
     match self {
       Self::Bash => bash::FORMAT,
@@ -36,7 +57,9 @@ impl Shell {
           .filter(|path| !path.is_empty())
           .map(PathBuf::from)
           .map(|path| path.join("fish/fish_history")),
-        Self::Bash | Self::Zsh => None,
+        Self::Bash | Self::Zsh => env::var_os("HISTFILE")
+          .filter(|path| !path.is_empty())
+          .map(PathBuf::from),
       })
       .or_else(|| {
         env::var_os("HOME")
@@ -47,7 +70,7 @@ impl Shell {
       .with_context(|| match self {
         Self::Fish => "failed to determine fish history path; pass --path or set XDG_DATA_HOME or HOME".into(),
         Self::Bash | Self::Zsh => format!(
-          "failed to determine {} history path; pass --path or set HOME",
+          "failed to determine {} history path; pass --path or set HISTFILE or HOME",
           self.format(),
         ),
       })
@@ -119,7 +142,11 @@ impl Shell {
 
     let inserted = result?;
 
-    println!("imported {inserted} executions from {}", path.display());
+    println!(
+      "imported {inserted} {} from {}",
+      Count("execution", inserted),
+      path.display()
+    );
 
     Ok(())
   }
@@ -142,16 +169,19 @@ impl Shell {
 
   pub(super) fn parser(self) -> Box<dyn Parser> {
     match self {
-      Self::Bash => Box::new(bash::parser::Parser::default()),
-      Self::Fish => Box::new(fish::parser::Parser::default()),
-      Self::Zsh => Box::new(zsh::parser::Parser::default()),
+      Self::Bash => Box::new(BashParser::default()),
+      Self::Fish => Box::new(FishParser::default()),
+      Self::Zsh => Box::new(ZshParser::default()),
     }
   }
 
   fn reader<'a>(self, reader: impl Read + 'a) -> Box<dyn Read + 'a> {
     match self {
       Self::Bash | Self::Fish => Box::new(reader),
-      Self::Zsh => Box::new(zsh::decode(reader)),
+      Self::Zsh => Box::new(Metafied {
+        escaped: false,
+        reader: BufReader::new(reader),
+      }),
     }
   }
 
