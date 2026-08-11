@@ -54,6 +54,7 @@ struct Test {
   arguments: Vec<OsString>,
   environments: Vec<(OsString, OsString)>,
   executable: OsString,
+  expected_status: i32,
   expected_stderr: String,
   expected_stdout: String,
   stdin: Option<Vec<u8>>,
@@ -219,9 +220,21 @@ impl Test {
       .unwrap()
   }
 
-  #[track_caller]
-  fn failure(self) -> Self {
-    self.status(1)
+  fn expected_status(mut self, expected_status: i32) -> Self {
+    self.expected_status = expected_status;
+    self
+  }
+
+  fn expected_stderr(mut self, expected_stderr: &str) -> Self {
+    assert!(self.expected_stderr.is_empty());
+    self.expected_stderr = expected_stderr.into();
+    self
+  }
+
+  fn expected_stdout(mut self, expected_stdout: &str) -> Self {
+    assert!(self.expected_stdout.is_empty());
+    self.expected_stdout = expected_stdout.into();
+    self
   }
 
   fn new() -> Self {
@@ -238,7 +251,7 @@ impl Test {
   }
 
   #[track_caller]
-  fn status(self, expected_status: i32) -> Self {
+  fn run(self) -> Self {
     let mut command = Command::new(&self.executable);
 
     let path = env::join_paths(
@@ -291,7 +304,7 @@ impl Test {
 
     assert_eq!(
       output.status.code(),
-      Some(expected_status),
+      Some(self.expected_status),
       "unexpected exit status\nstderr: {stderr}",
     );
 
@@ -304,27 +317,10 @@ impl Test {
     Self::with_tempdir(self.tempdir)
   }
 
-  fn stderr(mut self, expected_stderr: &str) -> Self {
-    assert!(self.expected_stderr.is_empty());
-    self.expected_stderr = expected_stderr.into();
-    self
-  }
-
   fn stdin(mut self, stdin: impl AsRef<[u8]>) -> Self {
     assert!(self.stdin.is_none());
     self.stdin = Some(stdin.as_ref().into());
     self
-  }
-
-  fn stdout(mut self, expected_stdout: &str) -> Self {
-    assert!(self.expected_stdout.is_empty());
-    self.expected_stdout = expected_stdout.into();
-    self
-  }
-
-  #[track_caller]
-  fn success(self) -> Self {
-    self.status(0)
   }
 
   fn with_tempdir(tempdir: TempDir) -> Self {
@@ -332,6 +328,7 @@ impl Test {
       arguments: Vec::new(),
       environments: Vec::new(),
       executable: env!("CARGO_BIN_EXE_honu").into(),
+      expected_status: 0,
       expected_stderr: String::new(),
       expected_stdout: String::new(),
       stdin: None,

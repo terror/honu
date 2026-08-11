@@ -7,7 +7,7 @@ fn bash_init() {
     .program("bash")
     .argument("-n")
     .stdin(include_str!("../src/shell/bash/init.bash"))
-    .success();
+    .run();
 }
 
 #[test]
@@ -31,8 +31,8 @@ fn bash_preserves_scalar_prompt_command() {
       },
     )
     .stdin("true\nexit\n")
-    .stdout("foo\nfoo\n")
-    .success()
+    .expected_stdout("foo\nfoo\n")
+    .run()
     .assert_recorded(&[("true", 0, "bash")]);
 }
 
@@ -56,7 +56,8 @@ fn bash_records_execution() {
       },
     )
     .stdin("true\nfalse\nexit\n")
-    .status(1)
+    .expected_status(1)
+    .run()
     .assert_recorded(&[("true", 0, "bash"), ("false", 1, "bash")]);
 }
 
@@ -67,7 +68,7 @@ fn fish_init() {
     .program("fish")
     .argument("-n")
     .stdin(include_str!("../src/shell/fish/init.fish"))
-    .success();
+    .run();
 }
 
 #[test]
@@ -85,7 +86,7 @@ fn fish_private_mode_is_not_recorded() {
       emit fish_postexec
       "
     })
-    .success()
+    .run()
     .assert_execution_count(0);
 }
 
@@ -107,7 +108,7 @@ fn fish_records_execution() {
       emit fish_postexec
       "
     })
-    .success()
+    .run()
     .assert_recorded(&[("true", 0, "fish"), ("false", 1, "fish")]);
 }
 
@@ -118,7 +119,7 @@ fn zsh_init() {
     .program("zsh")
     .argument("-n")
     .stdin(include_str!("../src/shell/zsh/init.zsh"))
-    .success();
+    .run();
 }
 
 #[test]
@@ -139,6 +140,7 @@ fn zsh_records_execution() {
       },
     )
     .stdin("true\nfalse\nexit\n")
-    .status(1)
+    .expected_status(1)
+    .run()
     .assert_recorded(&[("true", 0, "zsh"), ("false", 1, "zsh")]);
 }
