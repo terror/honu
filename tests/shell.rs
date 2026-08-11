@@ -2,26 +2,12 @@ use super::*;
 
 #[test]
 #[ignore = "requires bash"]
-fn bash_records_execution() {
+fn bash_init() {
   Test::new()
     .program("bash")
-    .arguments([
-      "-c",
-      "exec bash --noprofile --rcfile .bashrc -i 2>/dev/null",
-    ])
-    .write(
-      ".bashrc",
-      indoc! {
-        r#"
-        PS1=
-        PS2=
-        eval "$(honu init bash)"
-        "#
-      },
-    )
-    .stdin("true\nfalse\nexit\n")
-    .status(1)
-    .assert_recorded(&[("true", 0, "bash"), ("false", 1, "bash")]);
+    .argument("-n")
+    .stdin(include_str!("../src/shell/bash/init.bash"))
+    .success();
 }
 
 #[test]
@@ -51,25 +37,37 @@ fn bash_preserves_scalar_prompt_command() {
 }
 
 #[test]
+#[ignore = "requires bash"]
+fn bash_records_execution() {
+  Test::new()
+    .program("bash")
+    .arguments([
+      "-c",
+      "exec bash --noprofile --rcfile .bashrc -i 2>/dev/null",
+    ])
+    .write(
+      ".bashrc",
+      indoc! {
+        r#"
+        PS1=
+        PS2=
+        eval "$(honu init bash)"
+        "#
+      },
+    )
+    .stdin("true\nfalse\nexit\n")
+    .status(1)
+    .assert_recorded(&[("true", 0, "bash"), ("false", 1, "bash")]);
+}
+
+#[test]
 #[ignore = "requires fish"]
-fn fish_records_execution() {
+fn fish_init() {
   Test::new()
     .program("fish")
-    .argument("--no-config")
-    .stdin(indoc! {
-      "
-      set -e fish_private_mode
-      honu init fish | source
-      emit fish_preexec true
-      true
-      emit fish_postexec
-      emit fish_preexec false
-      false
-      emit fish_postexec
-      "
-    })
-    .success()
-    .assert_recorded(&[("true", 0, "fish"), ("false", 1, "fish")]);
+    .argument("-n")
+    .stdin(include_str!("../src/shell/fish/init.fish"))
+    .success();
 }
 
 #[test]
@@ -92,28 +90,30 @@ fn fish_private_mode_is_not_recorded() {
 }
 
 #[test]
-#[ignore = "requires bash"]
-fn init_bash() {
-  Test::new()
-    .program("bash")
-    .argument("-n")
-    .stdin(include_str!("../src/shell/bash/init.bash"))
-    .success();
-}
-
-#[test]
 #[ignore = "requires fish"]
-fn init_fish() {
+fn fish_records_execution() {
   Test::new()
     .program("fish")
-    .argument("-n")
-    .stdin(include_str!("../src/shell/fish/init.fish"))
-    .success();
+    .argument("--no-config")
+    .stdin(indoc! {
+      "
+      set -e fish_private_mode
+      honu init fish | source
+      emit fish_preexec true
+      true
+      emit fish_postexec
+      emit fish_preexec false
+      false
+      emit fish_postexec
+      "
+    })
+    .success()
+    .assert_recorded(&[("true", 0, "fish"), ("false", 1, "fish")]);
 }
 
 #[test]
 #[ignore = "requires zsh"]
-fn init_zsh() {
+fn zsh_init() {
   Test::new()
     .program("zsh")
     .argument("-n")
