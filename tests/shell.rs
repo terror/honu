@@ -91,6 +91,41 @@ fn bash_records_execution() {
 }
 
 #[test]
+#[ignore = "requires bash"]
+fn bash_respects_history_exclusions() {
+  Test::new()
+    .program("bash")
+    .arguments([
+      "-c",
+      "exec bash --noprofile --rcfile .bashrc -i 2>/dev/null",
+    ])
+    .write(
+      ".bashrc",
+      indoc! {
+        r#"
+        HISTCONTROL=ignoreboth
+        HISTIGNORE=false
+        PS1=
+        PS2=
+        eval "$(honu init bash)"
+        "#
+      },
+    )
+    .stdin(" true\nfalse\ntrue\ntrue\nset +o history\nfalse\nset -o history\nbuiltin true\nexit\n")
+    .run()
+    .inspect(|test| {
+      assert_eq!(
+        test
+          .executions()
+          .into_iter()
+          .map(|execution| execution.command)
+          .collect::<Vec<_>>(),
+        ["true", "set +o history", "builtin true"],
+      );
+    });
+}
+
+#[test]
 #[ignore = "requires fish"]
 fn fish_init() {
   Test::new()
