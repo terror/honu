@@ -1,5 +1,4 @@
 use super::*;
-use expectrl::{ControlCode, Eof, Expect, Session};
 
 #[test]
 #[ignore = "requires bash"]
@@ -51,42 +50,44 @@ fn bash_preserves_scalar_prompt_command() {
     .assert_recorded(&[("true", 0, "bash")]);
 }
 
-fn fish(config: &str, commands: &[&str]) -> Test {
-  let test = Test::new()
-    .program("fish")
-    .argument("--interactive")
-    .write(
-      "fish/config.fish",
-      format!(
-        "function fish_prompt\n  printf 'honu> '\nend\n{config}\nhonu init fish | source\n"
-      ),
-    );
-
-  let mut session = Session::spawn(test.command()).unwrap();
-  session.expect("honu> ").unwrap();
-
-  for command in commands {
-    session.send_line(command).unwrap();
-    session.expect("honu> ").unwrap();
-  }
-
-  session.send(ControlCode::EndOfTransmission).unwrap();
-  session.expect(Eof).unwrap();
-
-  test
-}
-
 #[test]
 #[ignore = "requires fish"]
 fn fish_records_execution() {
-  fish("", &["true", "false"])
+  Test::new()
+    .program("fish")
+    .argument("--no-config")
+    .stdin(indoc! {
+      "
+      honu init fish | source
+      emit fish_preexec true
+      true
+      emit fish_postexec
+      emit fish_preexec false
+      false
+      emit fish_postexec
+      "
+    })
+    .success()
     .assert_recorded(&[("true", 0, "fish"), ("false", 1, "fish")]);
 }
 
 #[test]
 #[ignore = "requires fish"]
 fn fish_private_mode_is_not_recorded() {
-  fish("set -g fish_private_mode 1", &["true"]).assert_execution_count(0);
+  Test::new()
+    .program("fish")
+    .argument("--no-config")
+    .stdin(indoc! {
+      "
+      set -g fish_private_mode 1
+      honu init fish | source
+      emit fish_preexec true
+      true
+      emit fish_postexec
+      "
+    })
+    .success()
+    .assert_execution_count(0);
 }
 
 #[test]

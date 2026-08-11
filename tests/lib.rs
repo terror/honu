@@ -156,36 +156,6 @@ impl Test {
     self
   }
 
-  fn command(&self) -> Command {
-    let path = env::join_paths(
-      once(
-        Path::new(env!("CARGO_BIN_EXE_honu"))
-          .parent()
-          .unwrap()
-          .to_path_buf(),
-      )
-      .chain(env::split_paths(&env::var_os("PATH").unwrap_or_default())),
-    )
-    .unwrap();
-
-    let mut command = Command::new(&self.executable);
-
-    command
-      .current_dir(self.tempdir.path())
-      .env("HOME", self.tempdir.path())
-      .env("XDG_CONFIG_HOME", self.tempdir.path())
-      .env("XDG_DATA_HOME", self.tempdir.path())
-      .env("ZDOTDIR", self.tempdir.path())
-      .env("PATH", path)
-      .args(&self.arguments);
-
-    for (key, value) in &self.environments {
-      command.env(key, value);
-    }
-
-    command
-  }
-
   fn database(&self) -> Connection {
     Connection::open(self.path("honu/history.db")).unwrap()
   }
@@ -269,12 +239,34 @@ impl Test {
 
   #[track_caller]
   fn status(self, expected_status: i32) -> Self {
-    let mut command = self.command();
+    let mut command = Command::new(&self.executable);
+
+    let path = env::join_paths(
+      once(
+        Path::new(env!("CARGO_BIN_EXE_honu"))
+          .parent()
+          .unwrap()
+          .to_path_buf(),
+      )
+      .chain(env::split_paths(&env::var_os("PATH").unwrap_or_default())),
+    )
+    .unwrap();
 
     command
+      .current_dir(self.tempdir.path())
+      .env("HOME", self.tempdir.path())
+      .env("XDG_CONFIG_HOME", self.tempdir.path())
+      .env("XDG_DATA_HOME", self.tempdir.path())
+      .env("ZDOTDIR", self.tempdir.path())
+      .env("PATH", path)
+      .args(&self.arguments)
       .stdin(Stdio::piped())
       .stdout(Stdio::piped())
       .stderr(Stdio::piped());
+
+    for (key, value) in &self.environments {
+      command.env(key, value);
+    }
 
     let mut child = command
       .spawn()
