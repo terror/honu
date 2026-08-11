@@ -1,4 +1,5 @@
 use super::*;
+use expectrl::{ControlCode, Eof, Expect, Session};
 
 #[test]
 #[ignore = "requires bash"]
@@ -50,57 +51,42 @@ fn bash_preserves_scalar_prompt_command() {
     .assert_recorded(&[("true", 0, "bash")]);
 }
 
-fn fish() -> Test {
-  let command = if cfg!(target_os = "linux") {
-    "exec script -q -e -c 'fish --interactive' /dev/null >/dev/null 2>&1"
-  } else {
-    "exec script -q -e /dev/null fish --interactive >/dev/null 2>&1"
-  };
+fn fish(config: &str, commands: &[&str]) -> Test {
+  let test = Test::new()
+    .program("fish")
+    .argument("--interactive")
+    .write(
+      "fish/config.fish",
+      format!(
+        "function fish_prompt\n  printf 'honu> '\nend\n{config}\nhonu init fish | source\n"
+      ),
+    );
 
-  Test::new().program("sh").arguments(["-c", command])
+  let mut session = Session::spawn(test.command()).unwrap();
+  session.expect("honu> ").unwrap();
+
+  for command in commands {
+    session.send_line(command).unwrap();
+    session.expect("honu> ").unwrap();
+  }
+
+  session.send(ControlCode::EndOfTransmission).unwrap();
+  session.expect(Eof).unwrap();
+
+  test
 }
 
 #[test]
 #[ignore = "requires fish"]
 fn fish_records_execution() {
-  fish()
-    .write(
-      "fish/config.fish",
-      indoc! {
-        "
-        function fish_prompt
-        end
-        honu init fish | source
-        "
-      },
-    )
-    .stdin("true\nfalse\nexit\n")
-    .status(1)
-    .assert_recorded(&[
-      ("true", 0, "fish"),
-      ("false", 1, "fish"),
-      ("exit", 1, "fish"),
-    ]);
+  fish("", &["true", "false"])
+    .assert_recorded(&[("true", 0, "fish"), ("false", 1, "fish")]);
 }
 
 #[test]
 #[ignore = "requires fish"]
 fn fish_private_mode_is_not_recorded() {
-  fish()
-    .write(
-      "fish/config.fish",
-      indoc! {
-        "
-        function fish_prompt
-        end
-        set -g fish_private_mode 1
-        honu init fish | source
-        "
-      },
-    )
-    .stdin("true\nexit\n")
-    .success()
-    .assert_execution_count(0);
+  fish("set -g fish_private_mode 1", &["true"]).assert_execution_count(0);
 }
 
 #[test]

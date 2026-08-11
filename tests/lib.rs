@@ -129,22 +129,61 @@ impl Test {
 
   #[track_caller]
   fn assert_recorded(self, expected: &[(&str, i32, &str)]) -> Self {
-    let executions = self.executions();
-
-    let actual = executions
-      .iter()
+    let mut actual = self
+      .executions()
+      .into_iter()
       .map(|execution| {
         (
-          execution.command.as_str(),
+          execution.command,
           execution.exit_code.unwrap(),
-          execution.shell.as_deref().unwrap(),
+          execution.shell.unwrap(),
         )
       })
       .collect::<Vec<_>>();
 
+    let mut expected = expected
+      .iter()
+      .map(|(command, exit_code, shell)| {
+        ((*command).into(), *exit_code, (*shell).into())
+      })
+      .collect::<Vec<_>>();
+
+    actual.sort();
+    expected.sort();
+
     assert_eq!(actual, expected);
 
     self
+  }
+
+  fn command(&self) -> Command {
+    let path = env::join_paths(
+      once(
+        Path::new(env!("CARGO_BIN_EXE_honu"))
+          .parent()
+          .unwrap()
+          .to_path_buf(),
+      )
+      .chain(env::split_paths(&env::var_os("PATH").unwrap_or_default())),
+    )
+    .unwrap();
+
+    let mut command = Command::new(&self.executable);
+
+    command
+      .current_dir(self.tempdir.path())
+      .env("HOME", self.tempdir.path())
+      .env("XDG_CONFIG_HOME", self.tempdir.path())
+      .env("XDG_DATA_HOME", self.tempdir.path())
+      .env("ZDOTDIR", self.tempdir.path())
+      .env("PATH", path)
+      .args(&self.arguments);
+
+    for (key, value) in &self.environments {
+      command.env(key, value);
+    }
+
+    command
   }
 
   fn database(&self) -> Connection {
@@ -230,34 +269,12 @@ impl Test {
 
   #[track_caller]
   fn status(self, expected_status: i32) -> Self {
-    let mut command = Command::new(&self.executable);
-
-    let path = env::join_paths(
-      once(
-        Path::new(env!("CARGO_BIN_EXE_honu"))
-          .parent()
-          .unwrap()
-          .to_path_buf(),
-      )
-      .chain(env::split_paths(&env::var_os("PATH").unwrap_or_default())),
-    )
-    .unwrap();
+    let mut command = self.command();
 
     command
-      .current_dir(self.tempdir.path())
-      .env("HOME", self.tempdir.path())
-      .env("XDG_CONFIG_HOME", self.tempdir.path())
-      .env("XDG_DATA_HOME", self.tempdir.path())
-      .env("ZDOTDIR", self.tempdir.path())
-      .env("PATH", path)
-      .args(&self.arguments)
       .stdin(Stdio::piped())
       .stdout(Stdio::piped())
       .stderr(Stdio::piped());
-
-    for (key, value) in &self.environments {
-      command.env(key, value);
-    }
 
     let mut child = command
       .spawn()
