@@ -49,6 +49,31 @@ fn bash() {
 }
 
 #[test]
+fn detection_failure_is_actionable() {
+  Test::new()
+    .env("SHELL", "/bin/elvish")
+    .argument("import")
+    .expected_stderr(
+      "error: unsupported shell `/bin/elvish`; pass bash, fish, or zsh\n",
+    )
+    .expected_status(1)
+    .run();
+}
+
+#[test]
+fn detects_shell() {
+  Test::new()
+    .write("history", ": 1:0;foo\n")
+    .env("SHELL", "/bin/zsh")
+    .arguments(["import", "--path", "history"])
+    .expected_stdout("imported 1 execution from history\n")
+    .run()
+    .inspect(|test| {
+      assert_eq!(test.executions()[0].shell.as_deref(), Some("zsh"));
+    });
+}
+
+#[test]
 fn defaults_are_shell_specific() {
   let test = Test::new()
     .write(".bash_history", "foo\n")
