@@ -1,6 +1,8 @@
 use super::*;
 
-pub(super) mod parser;
+pub(super) use parser::FishParser;
+
+mod parser;
 
 pub(super) const DEFAULT_HISTORY_FILE: &str = ".local/share/fish/fish_history";
 pub(super) const FORMAT: &str = "fish";

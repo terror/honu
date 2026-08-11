@@ -1,8 +1,8 @@
 use {
   super::*,
-  bash::parser::BashParser,
-  fish::parser::FishParser,
-  zsh::{metafied::Metafied, parser::ZshParser},
+  bash::BashParser,
+  fish::FishParser,
+  zsh::{Metafied, ZshParser},
 };
 
 mod bash;
