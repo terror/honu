@@ -88,7 +88,7 @@ impl Shell {
     let source = fs::canonicalize(&path).with_context(|| {
       format!(
         "failed to resolve {} history `{}`",
-        self.name(),
+        self.format(),
         path.display()
       )
     })?;
@@ -96,14 +96,14 @@ impl Shell {
     let file = fs::File::open(&source).with_context(|| {
       format!(
         "failed to read {} history `{}`",
-        self.name(),
+        self.format(),
         path.display()
       )
     })?;
 
     let metadata = file.metadata()?;
 
-    let name = self.name();
+    let name = self.format();
 
     let progress = Progress::new(format!("{name}: parsing"))?;
 
@@ -119,7 +119,7 @@ impl Shell {
       let mut record = record.with_context(|| {
         format!(
           "failed to parse {} history `{}`",
-          self.name(),
+          self.format(),
           path.display()
         )
       })?;
@@ -156,14 +156,6 @@ impl Shell {
       Self::Bash => bash::INIT,
       Self::Fish => fish::INIT,
       Self::Zsh => zsh::INIT,
-    }
-  }
-
-  fn name(self) -> &'static str {
-    match self {
-      Self::Bash => bash::NAME,
-      Self::Fish => fish::NAME,
-      Self::Zsh => zsh::NAME,
     }
   }
 

@@ -259,7 +259,7 @@ fn parse_failure_does_not_partially_import() {
     .arguments(["import", "--path", "history", "bash"])
     .expected_stderr(indoc! {
       "
-      error: failed to parse Bash history `history`
+      error: failed to parse bash history `history`
 
       because:
       - timestamp on history line 3 overflows nanoseconds
