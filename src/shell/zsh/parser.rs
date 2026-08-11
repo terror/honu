@@ -1,83 +1,15 @@
 use super::*;
 
 const NANOSECONDS_PER_SECOND: u64 = 1_000_000_000;
-const META: u8 = 0x83;
-
-struct Metafied<R> {
-  escaped: bool,
-  reader: R,
-}
-
-impl<R: BufRead> Read for Metafied<R> {
-  fn read(&mut self, output: &mut [u8]) -> io::Result<usize> {
-    if output.is_empty() {
-      return Ok(0);
-    }
-
-    let mut written = 0;
-
-    while written < output.len() {
-      let (consumed, exhausted) = {
-        let input = self.reader.fill_buf()?;
-
-        if input.is_empty() {
-          (0, true)
-        } else {
-          let mut consumed = 0;
-
-          for byte in input.iter().copied() {
-            consumed += 1;
-
-            if self.escaped {
-              output[written] = byte ^ 0x20;
-              written += 1;
-              self.escaped = false;
-            } else if byte == META {
-              self.escaped = true;
-            } else {
-              output[written] = byte;
-              written += 1;
-            }
-
-            if written == output.len() {
-              break;
-            }
-          }
-
-          (consumed, false)
-        }
-      };
-
-      self.reader.consume(consumed);
-
-      if exhausted {
-        if self.escaped {
-          if written > 0 {
-            return Ok(written);
-          }
-
-          return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "zsh history ends with an incomplete metafied byte",
-          ));
-        }
-
-        break;
-      }
-    }
-
-    Ok(written)
-  }
-}
 
 #[derive(Default)]
-pub(crate) struct Parser {
+pub(crate) struct ZshParser {
   command: Vec<u8>,
   command_line: Option<usize>,
   plain_timestamp_ns: i64,
 }
 
-impl Parser {
+impl ZshParser {
   fn complete(&mut self) -> Result<Option<Record>> {
     let Some(line) = self.command_line.take() else {
       return Ok(None);
@@ -159,7 +91,7 @@ impl Parser {
   }
 }
 
-impl crate::parser::Parser for Parser {
+impl Parser for ZshParser {
   fn finish(&mut self) -> Result<Option<Record>> {
     self.complete()
   }
@@ -181,13 +113,6 @@ impl crate::parser::Parser for Parser {
     } else {
       self.complete()
     }
-  }
-}
-
-pub(super) fn decode(reader: impl Read) -> impl Read {
-  Metafied {
-    escaped: false,
-    reader: BufReader::new(reader),
   }
 }
 
@@ -314,7 +239,7 @@ mod tests {
   fn incomplete_metafied_byte() {
     assert_eq!(
       Shell::Zsh
-        .records(&[META][..])
+        .records(&[0x83][..])
         .collect::<Result<Vec<_>>>()
         .unwrap_err()
         .to_string(),

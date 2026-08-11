@@ -1,4 +1,9 @@
-use super::*;
+use {
+  super::*,
+  bash::BashParser,
+  fish::FishParser,
+  zsh::{Metafied, ZshParser},
+};
 
 mod bash;
 mod fish;
@@ -146,16 +151,19 @@ impl Shell {
 
   pub(super) fn parser(self) -> Box<dyn Parser> {
     match self {
-      Self::Bash => Box::new(bash::parser::Parser::default()),
-      Self::Fish => Box::new(fish::parser::Parser::default()),
-      Self::Zsh => Box::new(zsh::parser::Parser::default()),
+      Self::Bash => Box::new(BashParser::default()),
+      Self::Fish => Box::new(FishParser::default()),
+      Self::Zsh => Box::new(ZshParser::default()),
     }
   }
 
   fn reader<'a>(self, reader: impl Read + 'a) -> Box<dyn Read + 'a> {
     match self {
       Self::Bash | Self::Fish => Box::new(reader),
-      Self::Zsh => Box::new(zsh::decode(reader)),
+      Self::Zsh => Box::new(Metafied {
+        escaped: false,
+        reader: BufReader::new(reader),
+      }),
     }
   }
 

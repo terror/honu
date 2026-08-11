@@ -3,14 +3,14 @@ use super::*;
 const NANOSECONDS_PER_SECOND: u64 = 1_000_000_000;
 
 #[derive(Default)]
-pub(crate) struct Parser {
+pub(crate) struct BashParser {
   command: Vec<u8>,
   command_line: Option<usize>,
   plain_timestamp_ns: i64,
   timestamp: Option<(Vec<u8>, usize)>,
 }
 
-impl Parser {
+impl BashParser {
   fn complete(&mut self) -> Result<Option<Record>> {
     self.command_line = None;
 
@@ -81,7 +81,7 @@ impl Parser {
   }
 }
 
-impl crate::parser::Parser for Parser {
+impl Parser for BashParser {
   fn finish(&mut self) -> Result<Option<Record>> {
     self.complete()
   }
