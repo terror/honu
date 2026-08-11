@@ -17,6 +17,22 @@ pub(super) enum Shell {
 }
 
 impl Shell {
+  pub(super) fn detect() -> Result<Self> {
+    let shell = env::var_os("SHELL")
+      .filter(|shell| !shell.is_empty())
+      .context("failed to detect shell; pass bash, fish, or zsh")?;
+
+    match Path::new(&shell).file_name().and_then(|name| name.to_str()) {
+      Some("bash") => Ok(Self::Bash),
+      Some("fish") => Ok(Self::Fish),
+      Some("zsh") => Ok(Self::Zsh),
+      _ => bail!(
+        "unsupported shell `{}`; pass bash, fish, or zsh",
+        shell.to_string_lossy(),
+      ),
+    }
+  }
+
   pub(super) fn format(self) -> &'static str {
     match self {
       Self::Bash => bash::FORMAT,
