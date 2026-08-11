@@ -50,12 +50,20 @@ fn bash_preserves_scalar_prompt_command() {
     .assert_recorded(&[("true", 0, "bash")]);
 }
 
+fn fish() -> Test {
+  let command = if cfg!(target_os = "linux") {
+    "exec script -q -e -c 'fish --interactive' /dev/null >/dev/null 2>&1"
+  } else {
+    "exec script -q -e /dev/null fish --interactive >/dev/null 2>&1"
+  };
+
+  Test::new().program("sh").arguments(["-c", command])
+}
+
 #[test]
 #[ignore = "requires fish"]
 fn fish_records_execution() {
-  Test::new()
-    .program("sh")
-    .arguments(["-c", "exec fish --interactive 2>/dev/null"])
+  fish()
     .write(
       "fish/config.fish",
       indoc! {
@@ -74,9 +82,7 @@ fn fish_records_execution() {
 #[test]
 #[ignore = "requires fish"]
 fn fish_private_mode_is_not_recorded() {
-  let test = Test::new()
-    .program("sh")
-    .arguments(["-c", "exec fish --interactive 2>/dev/null"])
+  fish()
     .write(
       "fish/config.fish",
       indoc! {
@@ -89,9 +95,8 @@ fn fish_private_mode_is_not_recorded() {
       },
     )
     .stdin("true\nexit\n")
-    .success();
-
-  assert!(!test.path("honu/history.db").try_exists().unwrap());
+    .success()
+    .assert_execution_count(0);
 }
 
 #[test]
