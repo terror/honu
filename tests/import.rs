@@ -204,12 +204,14 @@ fn parse_failure_does_not_partially_import() {
   Test::new()
     .write("history", "#1\nfoo\n#9223372037\nbar\n")
     .arguments(["import", "--path", "history", "bash"])
-    .expected_stderr(indoc! {"
+    .expected_stderr(indoc! {
+      "
       error: failed to parse Bash history `history`
 
       because:
       - timestamp on history line 3 overflows nanoseconds
-    "})
+      "
+    })
     .expected_status(1)
     .run()
     .inspect(|test| assert_eq!(test.executions().len(), 0))
