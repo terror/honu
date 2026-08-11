@@ -244,3 +244,50 @@ fn zsh_records_execution() {
       );
     });
 }
+
+#[test]
+#[ignore = "requires zsh"]
+fn zsh_respects_history_exclusions() {
+  Test::new()
+    .program("zsh")
+    .arguments(["-d", "-i"])
+    .write(
+      ".zshrc",
+      indoc! {
+        r#"
+        exec 2>/dev/null
+        PROMPT=
+        RPROMPT=
+        setopt HIST_IGNORE_SPACE
+        _ignore_history() {
+          [[ "$1" == *ignored-by-hook* ]] && return 1
+          return 0
+        }
+        autoload -Uz add-zsh-hook
+        add-zsh-hook zshaddhistory _ignore_history
+        eval "$(honu init zsh)"
+        "#
+      },
+    )
+    .stdin(" : ignored-by-space\n: ignored-by-hook\nfalse\ntrue\nexit\n")
+    .run()
+    .inspect(|test| {
+      let mut executions = test
+        .executions()
+        .into_iter()
+        .map(|execution| {
+          (execution.command, execution.exit_code, execution.shell)
+        })
+        .collect::<Vec<_>>();
+
+      executions.sort();
+
+      assert_eq!(
+        executions,
+        [
+          ("false".into(), Some(1), Some("zsh".into())),
+          ("true".into(), Some(0), Some("zsh".into())),
+        ],
+      );
+    });
+}

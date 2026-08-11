@@ -8,13 +8,33 @@ fi
 
 typeset -g __honu_command=""
 typeset -g __honu_directory=""
+typeset -g __honu_history_number=""
+typeset -ga __honu_pending_arguments=()
+typeset -g __honu_pending_command=""
+typeset -g __honu_pending_history_number=""
 typeset -g __honu_started_at=""
+
+_honu_flush() {
+  emulate -L zsh
+
+  if [[ -n "$__honu_pending_command" &&
+    "${history[$__honu_pending_history_number]-}" == "$__honu_pending_command" ]]; then
+    command honu add "${__honu_pending_arguments[@]}" -- "$__honu_pending_command" >/dev/null 2>&1
+  fi
+
+  __honu_pending_arguments=()
+  __honu_pending_command=""
+  __honu_pending_history_number=""
+}
 
 _honu_preexec() {
   emulate -L zsh
 
+  _honu_flush
+
   __honu_command="$1"
   __honu_directory="$PWD"
+  __honu_history_number="$HISTCMD"
   __honu_started_at="${EPOCHREALTIME:-}"
 }
 
@@ -28,8 +48,8 @@ _honu_precmd() {
     return "$exit_code"
   fi
 
-  local command="$__honu_command"
   local directory="$__honu_directory"
+  local history_number="$__honu_history_number"
   local started_at="$__honu_started_at"
   local timestamp_ns=""
   local duration_ns=""
@@ -42,6 +62,7 @@ _honu_precmd() {
 
   __honu_command=""
   __honu_directory=""
+  __honu_history_number=""
   __honu_started_at=""
 
   if [[ -n "$started_at" && -n "$finished_at" ]]; then
@@ -54,7 +75,9 @@ _honu_precmd() {
     arguments+=(--hostname "$HOST")
   fi
 
-  command honu add "${arguments[@]}" -- "$command" >/dev/null 2>&1
+  __honu_pending_arguments=("${arguments[@]}")
+  __honu_pending_command="${history[$history_number]-}"
+  __honu_pending_history_number="$history_number"
 
   return "$exit_code"
 }
