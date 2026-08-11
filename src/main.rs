@@ -4,6 +4,7 @@ use {
   choice::Choice,
   clap::{Parser as Clap, ValueEnum},
   command::Command,
+  count::Count,
   database::Database,
   honu::Execution,
   imara_diff::{Algorithm, Diff, InternedInput},
@@ -26,7 +27,9 @@ use {
   },
   std::{
     borrow::Cow,
-    env, fs,
+    env, fmt,
+    fmt::{Display, Formatter},
+    fs,
     io::{self, BufRead, BufReader, IsTerminal, Read},
     mem,
     path::{Path, PathBuf},
@@ -49,6 +52,7 @@ use {std::os::unix::fs::PermissionsExt, xdg::BaseDirectories};
 mod arguments;
 mod choice;
 mod command;
+mod count;
 mod database;
 mod line;
 mod lines;

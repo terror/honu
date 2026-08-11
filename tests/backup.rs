@@ -8,7 +8,7 @@ fn backup() {
   let test = Test::new()
     .write("history", "foo\n")
     .arguments(["import", "--path", "history", "zsh"])
-    .expected_stdout("imported 1 executions from history\n")
+    .expected_stdout("imported 1 execution from history\n")
     .run()
     .arguments(["backup", "foo/bar/honu.sqlite"])
     .run()
@@ -53,7 +53,7 @@ fn backup() {
       },
     )
     .arguments(["import", "--path", "history", "zsh"])
-    .expected_stdout("imported 1 executions from history\n")
+    .expected_stdout("imported 1 execution from history\n")
     .run()
     .arguments(["backup", "--force", "foo/bar/honu.sqlite"])
     .run()
@@ -76,7 +76,7 @@ fn backup_is_usable_application_database() {
   let test = Test::new()
     .write("history", "foo\n")
     .arguments(["import", "--path", "history", "zsh"])
-    .expected_stdout("imported 1 executions from history\n")
+    .expected_stdout("imported 1 execution from history\n")
     .run()
     .arguments(["backup", "backup/honu/history.db"])
     .run();
@@ -99,7 +99,7 @@ fn backup_is_usable_application_database() {
   test
     .env("XDG_DATA_HOME", backup)
     .arguments(["import", "--path", "history", "zsh"])
-    .expected_stdout("imported 1 executions from history\n")
+    .expected_stdout("imported 1 execution from history\n")
     .run()
     .inspect(|test| assert_eq!(test.executions().len(), 1))
     .inspect(|test| {
