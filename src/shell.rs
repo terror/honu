@@ -1,8 +1,13 @@
-use super::*;
+use {
+  super::*,
+  bash::parser::BashParser,
+  fish::parser::FishParser,
+  zsh::{metafied::Metafied, parser::ZshParser},
+};
 
-pub(super) mod bash;
-pub(super) mod fish;
-pub(super) mod zsh;
+mod bash;
+mod fish;
+mod zsh;
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
 pub(super) enum Shell {

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(crate) mod parser;
+pub(super) mod parser;
 
 pub(super) const DEFAULT_HISTORY_FILE: &str = ".bash_history";
 pub(super) const FORMAT: &str = "bash";

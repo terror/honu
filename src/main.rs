@@ -20,12 +20,7 @@ use {
   record::Record,
   records::Records,
   rusqlite::{Connection, MAIN_DB, Transaction, TransactionBehavior, params},
-  shell::{
-    Shell,
-    bash::parser::BashParser,
-    fish::parser::FishParser,
-    zsh::{metafied::Metafied, parser::ZshParser},
-  },
+  shell::Shell,
   skim::{
     DisplayContext, Skim, SkimItem, SkimItemSender,
     options::SkimOptionsBuilder, prelude::bounded,
