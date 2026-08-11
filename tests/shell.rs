@@ -58,6 +58,7 @@ fn fish_records_execution() {
     .argument("--no-config")
     .stdin(indoc! {
       "
+      set -e fish_private_mode
       honu init fish | source
       emit fish_preexec true
       true
