@@ -17,8 +17,8 @@ fn bash() {
       },
     )
     .arguments(["import", "--path", "history", "bash"])
-    .stdout("imported 2 executions from history\n")
-    .success()
+    .expected_stdout("imported 2 executions from history\n")
+    .run()
     .assert_executions([
       Execution {
         shell: Some("bash".into()),
@@ -65,17 +65,17 @@ fn defaults_are_shell_specific() {
     .env("HISTFILE", &history)
     .env("HOME", &home)
     .arguments(["import", "zsh"])
-    .stdout("imported 1 executions from [ROOT]/.zsh_history\n")
-    .success()
+    .expected_stdout("imported 1 executions from [ROOT]/.zsh_history\n")
+    .run()
     .env("HISTFILE", &history)
     .env("HOME", &home)
     .arguments(["import", "bash"])
-    .stdout("imported 1 executions from [ROOT]/.bash_history\n")
-    .success()
+    .expected_stdout("imported 1 executions from [ROOT]/.bash_history\n")
+    .run()
     .env("HOME", &home)
     .arguments(["import", "fish"])
-    .stdout("imported 1 executions from [ROOT]/fish/fish_history\n")
-    .success()
+    .expected_stdout("imported 1 executions from [ROOT]/fish/fish_history\n")
+    .run()
     .assert_executions([
       Execution {
         shell: Some("bash".into()),
@@ -99,17 +99,17 @@ fn distinct_sources_are_tracked_independently() {
     .write("foo", "bar\n")
     .write("baz", "bar\n")
     .arguments(["import", "--path", "foo", "zsh"])
-    .stdout("imported 1 executions from foo\n")
-    .success()
+    .expected_stdout("imported 1 executions from foo\n")
+    .run()
     .arguments(["import", "--path", "baz", "zsh"])
-    .stdout("imported 1 executions from baz\n")
-    .success()
+    .expected_stdout("imported 1 executions from baz\n")
+    .run()
     .arguments(["import", "--path", "foo", "zsh"])
-    .stdout("imported 0 executions from foo\n")
-    .success()
+    .expected_stdout("imported 0 executions from foo\n")
+    .run()
     .arguments(["import", "--path", "baz", "zsh"])
-    .stdout("imported 0 executions from baz\n")
-    .success()
+    .expected_stdout("imported 0 executions from baz\n")
+    .run()
     .assert_execution_count(2);
 }
 
@@ -130,8 +130,8 @@ fn fish() {
       },
     )
     .arguments(["import", "--path", "history", "fish"])
-    .stdout("imported 2 executions from history\n")
-    .success()
+    .expected_stdout("imported 2 executions from history\n")
+    .run()
     .assert_executions([
       Execution {
         shell: Some("fish".into()),
@@ -161,11 +161,11 @@ fn idempotent() {
     Test::new()
       .write("history", history)
       .arguments(["import", "--path", "history", shell])
-      .stdout("imported 2 executions from history\n")
-      .success()
+      .expected_stdout("imported 2 executions from history\n")
+      .run()
       .arguments(["import", "--path", "history", shell])
-      .stdout("imported 0 executions from history\n")
-      .success()
+      .expected_stdout("imported 0 executions from history\n")
+      .run()
       .assert_execution_count(2);
   }
 
@@ -179,15 +179,15 @@ fn parse_failure_does_not_partially_import() {
   Test::new()
     .write("history", "#1\nfoo\n#9223372037\nbar\n")
     .arguments(["import", "--path", "history", "bash"])
-    .stderr(
+    .expected_stderr(
       "error: failed to parse Bash history `history`\n\nbecause:\n- timestamp on history line 3 overflows nanoseconds\n",
     )
-    .failure()
+    .expected_status(1).run()
     .assert_execution_count(0)
     .write("history", "#1\nfoo\n#2\nbar\n")
     .arguments(["import", "--path", "history", "bash"])
-    .stdout("imported 2 executions from history\n")
-    .success()
+    .expected_stdout("imported 2 executions from history\n")
+    .run()
     .assert_execution_count(2);
 }
 
@@ -196,8 +196,8 @@ fn reconciles_insertions_with_existing_executions() {
   let test = Test::new()
     .write("history", "foo\nbar\n")
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 2 executions from history\n")
-    .success();
+    .expected_stdout("imported 2 executions from history\n")
+    .run();
 
   let foo = test.execution_id("foo");
   let bar = test.execution_id("bar");
@@ -205,8 +205,8 @@ fn reconciles_insertions_with_existing_executions() {
   let test = test
     .write("history", "baz\nfoo\nqux\nbar\n")
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 2 executions from history\n")
-    .success()
+    .expected_stdout("imported 2 executions from history\n")
+    .run()
     .assert_executions([
       Execution {
         shell: Some("zsh".into()),
@@ -235,15 +235,15 @@ fn repeated_commands_are_reconciled_by_occurrence() {
   Test::new()
     .write("history", "foo\nfoo\n")
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 2 executions from history\n")
-    .success()
+    .expected_stdout("imported 2 executions from history\n")
+    .run()
     .write("history", "foo\nfoo\nfoo\n")
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 1 executions from history\n")
-    .success()
+    .expected_stdout("imported 1 executions from history\n")
+    .run()
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 0 executions from history\n")
-    .success()
+    .expected_stdout("imported 0 executions from history\n")
+    .run()
     .assert_execution_count(3);
 }
 
@@ -252,8 +252,8 @@ fn truncated_records_are_retained() {
   let test = Test::new()
     .write("history", "foo\nbar\nbaz\n")
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 3 executions from history\n")
-    .success();
+    .expected_stdout("imported 3 executions from history\n")
+    .run();
 
   let bar = test.execution_id("bar");
   let baz = test.execution_id("baz");
@@ -261,8 +261,8 @@ fn truncated_records_are_retained() {
   let test = test
     .write("history", "bar\nbaz\n")
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 0 executions from history\n")
-    .success()
+    .expected_stdout("imported 0 executions from history\n")
+    .run()
     .assert_execution_count(3);
 
   assert_eq!(test.execution_id("bar"), bar);
@@ -282,8 +282,8 @@ fn zsh() {
       },
     )
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 2 executions from history\n")
-    .success()
+    .expected_stdout("imported 2 executions from history\n")
+    .run()
     .assert_executions([
       Execution {
         shell: Some("zsh".into()),

@@ -8,7 +8,7 @@ fn defaults() {
 
   test
     .arguments(["add", "--timestamp-ns", "1", "--", "foo"])
-    .success()
+    .run()
     .assert_executions([Execution {
       directory: Some(directory),
       ..Execution::new("foo", 1)
@@ -37,7 +37,7 @@ fn record() {
       "--",
       "foo",
     ])
-    .success()
+    .run()
     .assert_executions([Execution {
       directory: Some("/foo".into()),
       duration_ns: Some(2),

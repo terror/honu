@@ -12,7 +12,7 @@ fn list() {
       "--",
       "foo",
     ])
-    .success()
+    .run()
     .arguments([
       "add",
       "--timestamp-ns",
@@ -22,18 +22,18 @@ fn list() {
       "--",
       "bar",
     ])
-    .success()
+    .run()
     .argument("list")
-    .stdout(indoc! {
+    .expected_stdout(indoc! {
       "
       2\t0\tbar
       1\t1\tfoo
       "
     })
-    .success()
+    .run()
     .arguments(["list", "--limit", "1"])
-    .stdout("2\t0\tbar\n")
-    .success()
+    .expected_stdout("2\t0\tbar\n")
+    .run()
     .arguments(["list", "--limit", "0"])
-    .success();
+    .run();
 }

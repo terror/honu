@@ -8,10 +8,10 @@ fn backup() {
   let test = Test::new()
     .write("history", "foo\n")
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 1 executions from history\n")
-    .success()
+    .expected_stdout("imported 1 executions from history\n")
+    .run()
     .arguments(["backup", "foo/bar/honu.sqlite"])
-    .success()
+    .run()
     .assert_database("foo/bar/honu.sqlite", 1);
 
   #[cfg(unix)]
@@ -28,10 +28,10 @@ fn backup() {
 
   test
     .arguments(["backup", "foo/bar/honu.sqlite"])
-    .stderr(
+    .expected_stderr(
       "error: backup `foo/bar/honu.sqlite` already exists; use --force to overwrite it\n",
     )
-    .failure()
+    .expected_status(1).run()
     .write(
       "history",
       indoc! {
@@ -42,10 +42,10 @@ fn backup() {
       },
     )
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 1 executions from history\n")
-    .success()
+    .expected_stdout("imported 1 executions from history\n")
+    .run()
     .arguments(["backup", "--force", "foo/bar/honu.sqlite"])
-    .success()
+    .run()
     .assert_database("foo/bar/honu.sqlite", 2);
 }
 
@@ -54,18 +54,18 @@ fn backup_is_usable_application_database() {
   let test = Test::new()
     .write("history", "foo\n")
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 1 executions from history\n")
-    .success()
+    .expected_stdout("imported 1 executions from history\n")
+    .run()
     .arguments(["backup", "backup/honu/history.db"])
-    .success();
+    .run();
 
   let backup = test.path("backup");
 
   let test = test
     .env("XDG_DATA_HOME", &backup)
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 0 executions from history\n")
-    .success();
+    .expected_stdout("imported 0 executions from history\n")
+    .run();
 
   fs::OpenOptions::new()
     .append(true)
@@ -77,8 +77,8 @@ fn backup_is_usable_application_database() {
   test
     .env("XDG_DATA_HOME", backup)
     .arguments(["import", "--path", "history", "zsh"])
-    .stdout("imported 1 executions from history\n")
-    .success()
+    .expected_stdout("imported 1 executions from history\n")
+    .run()
     .assert_execution_count(1)
     .assert_database("backup/honu/history.db", 2);
 }
