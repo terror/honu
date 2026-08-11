@@ -82,83 +82,12 @@ impl Test {
     self
   }
 
-  fn assert_database(self, path: impl AsRef<Path>, executions: i64) -> Self {
-    let connection = Connection::open(self.path(path)).unwrap();
-
-    assert_eq!(
-      connection
-        .query_row("PRAGMA integrity_check", [], |row| row.get::<_, String>(0))
-        .unwrap(),
-      "ok",
-    );
-
-    assert_eq!(
-      connection
-        .query_row("SELECT COUNT(*) FROM executions", [], |row| {
-          row.get::<_, i64>(0)
-        })
-        .unwrap(),
-      executions,
-    );
-
-    self
-  }
-
-  fn assert_execution_count(self, expected: i64) -> Self {
-    assert_eq!(
-      self
-        .database()
-        .query_row("SELECT COUNT(*) FROM executions", [], |row| {
-          row.get::<_, i64>(0)
-        })
-        .unwrap(),
-      expected,
-    );
-
-    self
-  }
-
-  #[track_caller]
-  fn assert_executions(
-    self,
-    expected: impl IntoIterator<Item = Execution>,
-  ) -> Self {
-    assert_eq!(self.executions(), expected.into_iter().collect::<Vec<_>>(),);
-
-    self
-  }
-
-  #[track_caller]
-  fn assert_recorded(self, expected: &[(&str, i32, &str)]) -> Self {
-    let mut actual = self
-      .executions()
-      .into_iter()
-      .map(|execution| {
-        (
-          execution.command,
-          execution.exit_code.unwrap(),
-          execution.shell.unwrap(),
-        )
-      })
-      .collect::<Vec<_>>();
-
-    let mut expected = expected
-      .iter()
-      .map(|(command, exit_code, shell)| {
-        ((*command).into(), *exit_code, (*shell).into())
-      })
-      .collect::<Vec<_>>();
-
-    actual.sort();
-    expected.sort();
-
-    assert_eq!(actual, expected);
-
-    self
-  }
-
   fn database(&self) -> Connection {
-    Connection::open(self.path("honu/history.db")).unwrap()
+    self.database_at("honu/history.db")
+  }
+
+  fn database_at(&self, path: impl AsRef<Path>) -> Connection {
+    Connection::open(self.path(path)).unwrap()
   }
 
   fn env(mut self, key: impl AsRef<OsStr>, value: impl AsRef<OsStr>) -> Self {
@@ -234,6 +163,11 @@ impl Test {
   fn expected_stdout(mut self, expected_stdout: &str) -> Self {
     assert!(self.expected_stdout.is_empty());
     self.expected_stdout = expected_stdout.into();
+    self
+  }
+
+  fn inspect(self, inspect: impl FnOnce(&Self)) -> Self {
+    inspect(&self);
     self
   }
 
