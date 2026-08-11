@@ -1,5 +1,6 @@
 use {
   anyhow::Context,
+  honu::Execution,
   indoc::indoc,
   rusqlite::Connection,
   std::{
@@ -26,28 +27,6 @@ mod init;
 mod list;
 mod search;
 mod shell;
-
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
-struct Execution {
-  command: String,
-  directory: Option<PathBuf>,
-  duration_ns: Option<i64>,
-  exit_code: Option<i32>,
-  hostname: Option<String>,
-  session: Option<String>,
-  shell: Option<String>,
-  timestamp_ns: i64,
-}
-
-impl Execution {
-  fn new(command: &str, timestamp_ns: i64) -> Self {
-    Self {
-      command: command.into(),
-      timestamp_ns,
-      ..Default::default()
-    }
-  }
-}
 
 #[derive(Debug)]
 struct Test {

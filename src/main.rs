@@ -5,7 +5,7 @@ use {
   clap::{Parser as Clap, ValueEnum},
   command::Command,
   database::Database,
-  execution::Execution,
+  honu::Execution,
   imara_diff::{Algorithm, Diff, InternedInput},
   indicatif::{ProgressBar, ProgressStyle},
   line::Line,
@@ -50,7 +50,6 @@ mod arguments;
 mod choice;
 mod command;
 mod database;
-mod execution;
 mod line;
 mod lines;
 mod parser;

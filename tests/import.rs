@@ -24,22 +24,24 @@ fn bash() {
         test.executions(),
         [
           Execution {
+            command: indoc! {
+              r#"
+              for foo in bar; do
+                echo "$foo"
+              done
+              "#
+            }
+            .trim_end()
+            .into(),
             shell: Some("bash".into()),
-            ..Execution::new(
-              indoc! {
-                r#"
-            for foo in bar; do
-              echo "$foo"
-            done
-            "#
-              }
-              .trim_end(),
-              1_700_000_000_000_000_000,
-            )
+            timestamp_ns: 1_700_000_000_000_000_000,
+            ..Default::default()
           },
           Execution {
+            command: "cargo test".into(),
             shell: Some("bash".into()),
-            ..Execution::new("cargo test", 1_700_000_001_000_000_000)
+            timestamp_ns: 1_700_000_001_000_000_000,
+            ..Default::default()
           },
         ]
       );
@@ -86,17 +88,23 @@ fn defaults_are_shell_specific() {
         test.executions(),
         [
           Execution {
+            command: "foo".into(),
             shell: Some("bash".into()),
-            ..Execution::new("foo", 1)
+            timestamp_ns: 1,
+            ..Default::default()
           },
           Execution {
+            command: "bar".into(),
             duration_ns: Some(0),
             shell: Some("zsh".into()),
-            ..Execution::new("bar", 1_000_000_000)
+            timestamp_ns: 1_000_000_000,
+            ..Default::default()
           },
           Execution {
+            command: "baz".into(),
             shell: Some("fish".into()),
-            ..Execution::new("baz", 2_000_000_000)
+            timestamp_ns: 2_000_000_000,
+            ..Default::default()
           },
         ]
       );
@@ -147,22 +155,24 @@ fn fish() {
         test.executions(),
         [
           Execution {
+            command: "git status".into(),
             shell: Some("fish".into()),
-            ..Execution::new("git status", 1_700_000_000_000_000_000)
+            timestamp_ns: 1_700_000_000_000_000_000,
+            ..Default::default()
           },
           Execution {
-            shell: Some("fish".into()),
-            ..Execution::new(
-              indoc! {
-                "
+            command: indoc! {
+              "
             for foo in bar
                 echo $foo
             end
             "
-              }
-              .trim_end(),
-              1_700_000_001_000_000_000,
-            )
+            }
+            .trim_end()
+            .into(),
+            shell: Some("fish".into()),
+            timestamp_ns: 1_700_000_001_000_000_000,
+            ..Default::default()
           },
         ]
       );
@@ -194,10 +204,14 @@ fn parse_failure_does_not_partially_import() {
   Test::new()
     .write("history", "#1\nfoo\n#9223372037\nbar\n")
     .arguments(["import", "--path", "history", "bash"])
-    .expected_stderr(
-      "error: failed to parse Bash history `history`\n\nbecause:\n- timestamp on history line 3 overflows nanoseconds\n",
-    )
-    .expected_status(1).run()
+    .expected_stderr(indoc! {"
+      error: failed to parse Bash history `history`
+
+      because:
+      - timestamp on history line 3 overflows nanoseconds
+    "})
+    .expected_status(1)
+    .run()
     .inspect(|test| assert_eq!(test.executions().len(), 0))
     .write("history", "#1\nfoo\n#2\nbar\n")
     .arguments(["import", "--path", "history", "bash"])
@@ -227,20 +241,28 @@ fn reconciles_insertions_with_existing_executions() {
         test.executions(),
         [
           Execution {
+            command: "baz".into(),
             shell: Some("zsh".into()),
-            ..Execution::new("baz", 1)
+            timestamp_ns: 1,
+            ..Default::default()
           },
           Execution {
+            command: "foo".into(),
             shell: Some("zsh".into()),
-            ..Execution::new("foo", 2)
+            timestamp_ns: 2,
+            ..Default::default()
           },
           Execution {
+            command: "qux".into(),
             shell: Some("zsh".into()),
-            ..Execution::new("qux", 3)
+            timestamp_ns: 3,
+            ..Default::default()
           },
           Execution {
+            command: "bar".into(),
             shell: Some("zsh".into()),
-            ..Execution::new("bar", 4)
+            timestamp_ns: 4,
+            ..Default::default()
           },
         ]
       );
@@ -309,13 +331,17 @@ fn zsh() {
         test.executions(),
         [
           Execution {
+            command: "git status".into(),
             shell: Some("zsh".into()),
-            ..Execution::new("git status", 1)
+            timestamp_ns: 1,
+            ..Default::default()
           },
           Execution {
+            command: "cargo test".into(),
             duration_ns: Some(2_000_000_000),
             shell: Some("zsh".into()),
-            ..Execution::new("cargo test", 1_700_000_000_000_000_000)
+            timestamp_ns: 1_700_000_000_000_000_000,
+            ..Default::default()
           },
         ]
       );
