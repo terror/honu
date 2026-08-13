@@ -72,12 +72,14 @@ impl Search {
           info:-1:dim,\
           spinner:-1:dim"
       ))
+      .exact(matches!(config.search.mode, SearchMode::Exact))
       .height(format!("{}%", config.search.height))
       .info("right")
       .multi(false)
       .multi_select_icon("")
       .prompt(config.search.prompt)
       .query(&self.query)
+      .regex(matches!(config.search.mode, SearchMode::Regex))
       .selector_icon("")
       .build()?;
 
