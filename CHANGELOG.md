@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.1.2](https://github.com/terror/honu/releases/tag/0.1.2) - 2026-08-13
+
+### Added
+
+- Add section headers to configuration documentation ([#96](https://github.com/terror/honu/pull/96) by [terror](https://github.com/terror))
+- Add usage section to readme ([#95](https://github.com/terror/honu/pull/95) by [terror](https://github.com/terror))
+- Add configurable search info placement ([#92](https://github.com/terror/honu/pull/92) by [terror](https://github.com/terror))
+- Add configurable search directory width ([#91](https://github.com/terror/honu/pull/91) by [terror](https://github.com/terror))
+- Add configurable search mode ([#90](https://github.com/terror/honu/pull/90) by [terror](https://github.com/terror))
+- Add configurable search case ([#89](https://github.com/terror/honu/pull/89) by [terror](https://github.com/terror))
+- Add configurable search prompt ([#88](https://github.com/terror/honu/pull/88) by [terror](https://github.com/terror))
+- Add configurable search defaults ([#87](https://github.com/terror/honu/pull/87) by [terror](https://github.com/terror))
+- Add configurable search accent ([#86](https://github.com/terror/honu/pull/86) by [terror](https://github.com/terror))
+- Add import shell configuration ([#84](https://github.com/terror/honu/pull/84) by [terror](https://github.com/terror))
+
+### Fixed
+
+- Pass search config to item loader ([#93](https://github.com/terror/honu/pull/93) by [terror](https://github.com/terror))
+- Respect `zsh` history exclusions ([#79](https://github.com/terror/honu/pull/79) by [terror](https://github.com/terror))
+- Respect `bash` history exclusions ([#78](https://github.com/terror/honu/pull/78) by [terror](https://github.com/terror))
+- Use lowercase shell names when importing ([#77](https://github.com/terror/honu/pull/77) by [terror](https://github.com/terror))
+- Detect shell when importing history ([#76](https://github.com/terror/honu/pull/76) by [terror](https://github.com/terror))
+- Respect `HISTFILE` when importing history ([#75](https://github.com/terror/honu/pull/75) by [terror](https://github.com/terror))
+
+### Misc
+
+- Clarify configuration paths and search settings ([#94](https://github.com/terror/honu/pull/94) by [terror](https://github.com/terror))
+- Move binaries section into installation ([#85](https://github.com/terror/honu/pull/85) by [terror](https://github.com/terror))
+- Bump `skim` from 5.6.1 to 5.6.3 ([#80](https://github.com/terror/honu/pull/80) by [dependabot](https://github.com/dependabot))
+- Bump `rusqlite` from 0.40.1 to 0.40.2 ([#81](https://github.com/terror/honu/pull/81) by [dependabot](https://github.com/dependabot))
+- Bump `clap` from 4.6.5 to 4.6.6 ([#82](https://github.com/terror/honu/pull/82) by [dependabot](https://github.com/dependabot))
+- Bump `thiserror` from 2.0.19 to 2.0.20 ([#83](https://github.com/terror/honu/pull/83) by [dependabot](https://github.com/dependabot))
+
 ## [0.1.1](https://github.com/terror/honu/releases/tag/0.1.1) - 2026-08-11
 
 ### Added
