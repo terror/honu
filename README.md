@@ -59,9 +59,14 @@ Pre-built binaries for Linux, MacOS, and Windows can be found on
 
 ## Configuration
 
-`honu` reads its configuration from `$XDG_CONFIG_HOME/honu/config.toml`, or
-`~/.config/honu/config.toml` when `XDG_CONFIG_HOME` is unset. On Windows, it
-uses `%APPDATA%\honu\config.toml`:
+On Linux and macOS, `honu` reads its TOML configuration from
+`$XDG_CONFIG_HOME/honu/config.toml`, or `~/.config/honu/config.toml` when
+`XDG_CONFIG_HOME` is unset.
+
+On Windows, it reads `%XDG_CONFIG_HOME%\honu\config.toml`, or
+`%APPDATA%\honu\config.toml` when `XDG_CONFIG_HOME` is unset.
+
+Here is a sample configuration file:
 
 ```toml
 [import]
@@ -72,7 +77,7 @@ case = "smart"
 directory_width = 16
 height = 60
 info = "right"
-# limit = 10000
+limit = 10000
 mode = "fuzzy"
 prompt = " > "
 
@@ -83,12 +88,17 @@ accent = 6
 The configured import shell may be `bash`, `fish`, or `zsh`. An explicit shell
 passed to `honu import` takes precedence over this setting.
 
-Search defaults to 60% of the terminal height with no result limit. The
-optional configured limit is overridden by `--limit`, and height must be
-between 1 and 100. Case matching may be `smart`, `sensitive`, or `insensitive`.
+Search uses 60% of the terminal height by default. The configured height must
+be between 1 and 100. There is no default result limit, and `--limit` overrides
+the configured limit.
+
+Case matching may be `smart`, `sensitive`, or `insensitive`, and defaults to
+`smart`. Search mode may be `fuzzy`, `exact`, or `regex`, and defaults to
+`fuzzy`.
+
 Directory names are displayed in a 16-column field by default. Info placement
-may be `default`, `hidden`, `inline`, `inline-right`, `left`, or `right`.
-Search mode may be `fuzzy`, `exact`, or `regex`. The prompt defaults to ` > `.
+may be `default`, `hidden`, `inline`, `inline-right`, `left`, or `right`. The
+prompt defaults to ` > `.
 
 The theme accent sets the ANSI color used for the selected row, matches, query,
 prompt, and cursor in interactive search. It may be any ANSI color index from
