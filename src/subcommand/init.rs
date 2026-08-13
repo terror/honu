@@ -6,7 +6,7 @@ pub(crate) struct Init {
 }
 
 impl Init {
-  pub(crate) fn run(self, _database: &Database) {
+  pub(crate) fn run(self) {
     print!("{}", self.shell.init());
   }
 }

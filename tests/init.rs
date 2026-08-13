@@ -7,7 +7,11 @@ fn shells() {
     Test::new()
       .arguments(["init", shell])
       .expected_stdout(&expected.replace('\\', "/"))
-      .run();
+      .run()
+      .inspect(|test| {
+        assert!(!test.path("honu/config.toml").exists());
+        assert!(!test.path("honu/history.db").exists());
+      });
   }
 
   case("bash", include_str!("../src/shell/bash/init.bash"));

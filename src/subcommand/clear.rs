@@ -1,5 +1,5 @@
 use super::*;
 
-pub(crate) fn run(database: &Database) -> Result {
-  database.clear()
+pub(crate) fn run() -> Result {
+  Database::load()?.clear()
 }

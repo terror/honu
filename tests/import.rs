@@ -49,6 +49,28 @@ fn bash() {
 }
 
 #[test]
+fn configured_shell_is_used() {
+  Test::new()
+    .write(
+      "honu/config.toml",
+      indoc! {
+        r#"
+        [import]
+        shell = "zsh"
+        "#
+      },
+    )
+    .write("history", ": 1:0;foo\n")
+    .env("SHELL", "/bin/elvish")
+    .arguments(["import", "--path", "history"])
+    .expected_stdout("imported 1 execution from history\n")
+    .run()
+    .inspect(|test| {
+      assert_eq!(test.executions()[0].shell.as_deref(), Some("zsh"));
+    });
+}
+
+#[test]
 fn detection_failure_is_actionable() {
   Test::new()
     .env("SHELL", "/bin/elvish")
@@ -360,6 +382,28 @@ fn repeated_commands_are_reconciled_by_occurrence() {
     .expected_stdout("imported 0 executions from history\n")
     .run()
     .inspect(|test| assert_eq!(test.executions().len(), 3));
+}
+
+#[test]
+fn shell_argument_takes_precedence_over_config() {
+  Test::new()
+    .write(
+      "honu/config.toml",
+      indoc! {
+        r#"
+        [import]
+        shell = "zsh"
+        "#
+      },
+    )
+    .write("history", "foo\n")
+    .env("SHELL", "/bin/elvish")
+    .arguments(["import", "--path", "history", "bash"])
+    .expected_stdout("imported 1 execution from history\n")
+    .run()
+    .inspect(|test| {
+      assert_eq!(test.executions()[0].shell.as_deref(), Some("bash"));
+    });
 }
 
 #[test]

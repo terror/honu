@@ -9,7 +9,8 @@ mod bash;
 mod fish;
 mod zsh;
 
-#[derive(Clone, Copy, Debug, ValueEnum)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, ValueEnum)]
+#[serde(rename_all = "lowercase")]
 pub(super) enum Shell {
   Bash,
   Fish,

@@ -9,7 +9,7 @@ pub(crate) struct Backup {
 }
 
 impl Backup {
-  pub(crate) fn run(self, database: &Database) -> Result {
-    database.backup(&self.path, self.force)
+  pub(crate) fn run(self) -> Result {
+    Database::load()?.backup(&self.path, self.force)
   }
 }

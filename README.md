@@ -52,6 +52,20 @@ Otherwise, see below for the complete package list:
   </tbody>
 </table>
 
+## Configuration
+
+`honu` reads its configuration from `$XDG_CONFIG_HOME/honu/config.toml`, or
+`~/.config/honu/config.toml` when `XDG_CONFIG_HOME` is unset. On Windows, it
+uses `%APPDATA%\honu\config.toml`:
+
+```toml
+[import]
+shell = "zsh"
+```
+
+The configured import shell may be `bash`, `fish`, or `zsh`. An explicit shell
+passed to `honu import` takes precedence over this setting.
+
 ### Pre-built binaries
 
 Pre-built binaries for Linux, MacOS, and Windows can be found on

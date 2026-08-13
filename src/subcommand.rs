@@ -30,18 +30,18 @@ pub(crate) enum Subcommand {
 }
 
 impl Subcommand {
-  pub(crate) fn run(self, database: Database) -> Result {
+  pub(crate) fn run(self) -> Result {
     match self {
-      Self::Add(add) => add.run(&database),
-      Self::Backup(backup) => backup.run(&database),
-      Self::Clear => clear::run(&database),
-      Self::Import(import) => import.run(&database),
+      Self::Add(add) => add.run(),
+      Self::Backup(backup) => backup.run(),
+      Self::Clear => clear::run(),
+      Self::Import(import) => import.run(),
       Self::Init(init) => {
-        init.run(&database);
+        init.run();
         Ok(())
       }
-      Self::List(list) => list.run(&database),
-      Self::Search(search) => search.run(database),
+      Self::List(list) => list.run(),
+      Self::Search(search) => search.run(),
     }
   }
 }
