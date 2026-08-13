@@ -51,7 +51,12 @@ fn bash() {
 #[test]
 fn configured_shell_is_used() {
   Test::new()
-    .write_config("[import]\nshell = \"zsh\"\n")
+    .write_config(indoc! {
+      r#"
+      [import]
+      shell = "zsh"
+      "#
+    })
     .write("history", ": 1:0;foo\n")
     .env("SHELL", "/bin/elvish")
     .arguments(["import", "--path", "history"])
@@ -379,7 +384,12 @@ fn repeated_commands_are_reconciled_by_occurrence() {
 #[test]
 fn shell_argument_takes_precedence_over_config() {
   Test::new()
-    .write_config("[import]\nshell = \"zsh\"\n")
+    .write_config(indoc! {
+      r#"
+      [import]
+      shell = "zsh"
+      "#
+    })
     .write("history", "foo\n")
     .env("SHELL", "/bin/elvish")
     .arguments(["import", "--path", "history", "bash"])
