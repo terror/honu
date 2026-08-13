@@ -44,6 +44,7 @@ pub(crate) struct Search {
   pub(crate) case: SearchCase,
   pub(crate) directory_width: usize,
   pub(crate) height: NonZeroU8,
+  pub(crate) info: SearchInfo,
   pub(crate) limit: Option<usize>,
   pub(crate) mode: SearchMode,
   pub(crate) prompt: String,
@@ -55,6 +56,7 @@ impl Default for Search {
       case: SearchCase::default(),
       directory_width: 16,
       height: NonZeroU8::new(60).unwrap(),
+      info: SearchInfo::default(),
       limit: None,
       mode: SearchMode::default(),
       prompt: " > ".into(),
@@ -77,6 +79,31 @@ impl From<SearchCase> for CaseMatching {
       SearchCase::Insensitive => Self::Ignore,
       SearchCase::Sensitive => Self::Respect,
       SearchCase::Smart => Self::Smart,
+    }
+  }
+}
+
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub(crate) enum SearchInfo {
+  Default,
+  Hidden,
+  Inline,
+  InlineRight,
+  Left,
+  #[default]
+  Right,
+}
+
+impl SearchInfo {
+  pub(crate) fn as_str(self) -> &'static str {
+    match self {
+      Self::Default => "default",
+      Self::Hidden => "hidden",
+      Self::Inline => "inline",
+      Self::InlineRight => "inline-right",
+      Self::Left => "left",
+      Self::Right => "right",
     }
   }
 }

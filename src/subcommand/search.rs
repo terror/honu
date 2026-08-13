@@ -83,7 +83,7 @@ impl Search {
       ))
       .exact(matches!(config.search.mode, SearchMode::Exact))
       .height(format!("{}%", config.search.height))
-      .info("right")
+      .info(config.search.info.as_str())
       .multi(false)
       .multi_select_icon("")
       .prompt(config.search.prompt)
