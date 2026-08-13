@@ -14,8 +14,8 @@ impl Search {
 
   fn load_items(
     self,
+    config: &SearchConfig,
     database: &Database,
-    directory_width: usize,
     sender: &SkimItemSender,
   ) -> Result {
     let mut batch: Vec<Arc<dyn SkimItem>> =
@@ -29,7 +29,7 @@ impl Search {
     database.for_each_command(self.limit, |command| {
       batch.push(Arc::new(Choice {
         command,
-        directory_width,
+        directory_width: config.directory_width,
         now_ns,
       }));
 
@@ -86,7 +86,7 @@ impl Search {
       .info(config.search.info.as_str())
       .multi(false)
       .multi_select_icon("")
-      .prompt(config.search.prompt)
+      .prompt(config.search.prompt.as_str())
       .query(&self.query)
       .regex(matches!(config.search.mode, SearchMode::Regex))
       .selector_icon("")
@@ -94,9 +94,8 @@ impl Search {
 
     let (sender, receiver) = bounded(Self::CHANNEL_CAPACITY);
 
-    let directory_width = config.search.directory_width;
     let loader = thread::spawn(move || {
-      self.load_items(&database, directory_width, &sender)
+      self.load_items(&config.search, &database, &sender)
     });
 
     let output = Skim::run_with(options, Some(receiver));

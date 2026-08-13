@@ -4,7 +4,7 @@ use {
   choice::Choice,
   clap::{Parser as Clap, ValueEnum},
   command::Command,
-  config::{Config, SearchMode},
+  config::{Config, Search as SearchConfig, SearchMode},
   count::Count,
   database::Database,
   honu::Execution,
