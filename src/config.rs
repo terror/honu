@@ -1,13 +1,27 @@
 use super::*;
 
 #[derive(Debug, Default, Deserialize, Serialize)]
+#[serde(default)]
 pub(crate) struct Config {
   pub(crate) import: Import,
+  pub(crate) theme: Theme,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub(crate) struct Import {
   pub(crate) shell: Option<Shell>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(default)]
+pub(crate) struct Theme {
+  pub(crate) accent: u8,
+}
+
+impl Default for Theme {
+  fn default() -> Self {
+    Self { accent: 6 }
+  }
 }
 
 impl Config {

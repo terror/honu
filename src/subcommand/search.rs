@@ -47,24 +47,28 @@ impl Search {
   }
 
   pub(crate) fn run(self) -> Result {
+    let config = Config::load()?;
+
     let database = Database::load()?;
 
     if !database.has_executions()? {
       return Ok(());
     }
 
+    let accent = config.theme.accent;
+
     let options = SkimOptionsBuilder::default()
-      .color(
+      .color(format!(
         "none,\
-          current:6:bold,\
+          current:{accent}:bold,\
           matched:-1:underlined,\
-          current_match:6:bold:underlined,\
-          query:6:bold,\
-          prompt:6:bold,\
-          cursor:6:bold,\
+          current_match:{accent}:bold:underlined,\
+          query:{accent}:bold,\
+          prompt:{accent}:bold,\
+          cursor:{accent}:bold,\
           info:-1:dim,\
-          spinner:-1:dim",
-      )
+          spinner:-1:dim"
+      ))
       .height("60%")
       .info("right")
       .multi(false)
