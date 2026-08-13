@@ -151,7 +151,7 @@ fn fish_private_mode_is_not_recorded() {
       "
     })
     .run()
-    .inspect(|test| assert_eq!(test.executions().len(), 0));
+    .inspect(|test| assert!(!test.path("honu/history.db").exists()));
 }
 
 #[test]
