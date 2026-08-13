@@ -60,6 +60,7 @@ impl Search {
     self.limit = self.limit.or(config.search.limit);
 
     let options = SkimOptionsBuilder::default()
+      .case(config.search.case)
       .color(format!(
         "none,\
           current:{accent}:bold,\

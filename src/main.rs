@@ -24,7 +24,7 @@ use {
   serde::{Deserialize, Serialize},
   shell::Shell,
   skim::{
-    DisplayContext, Skim, SkimItem, SkimItemSender,
+    CaseMatching, DisplayContext, Skim, SkimItem, SkimItemSender,
     options::SkimOptionsBuilder, prelude::bounded,
   },
   std::{
