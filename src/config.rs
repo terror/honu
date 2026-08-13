@@ -41,6 +41,7 @@ pub(crate) struct Import {
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(default)]
 pub(crate) struct Search {
+  pub(crate) case: SearchCase,
   pub(crate) height: NonZeroU8,
   pub(crate) limit: Option<usize>,
   pub(crate) prompt: String,
@@ -49,9 +50,29 @@ pub(crate) struct Search {
 impl Default for Search {
   fn default() -> Self {
     Self {
+      case: SearchCase::default(),
       height: NonZeroU8::new(60).unwrap(),
       limit: None,
       prompt: " > ".into(),
+    }
+  }
+}
+
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum SearchCase {
+  Insensitive,
+  Sensitive,
+  #[default]
+  Smart,
+}
+
+impl From<SearchCase> for CaseMatching {
+  fn from(case: SearchCase) -> Self {
+    match case {
+      SearchCase::Insensitive => Self::Ignore,
+      SearchCase::Sensitive => Self::Respect,
+      SearchCase::Smart => Self::Smart,
     }
   }
 }
