@@ -127,8 +127,12 @@ prompt = " > "
 accent = 6
 ```
 
+### Import
+
 The configured import shell may be `bash`, `fish`, or `zsh`. An explicit shell
 passed to `honu import` takes precedence over this setting.
+
+### Search
 
 Search uses 60% of the terminal height by default. The configured height must be
 between 1 and 100. There is no default result limit, and `--limit` overrides the
@@ -141,6 +145,8 @@ Case matching may be `smart`, `sensitive`, or `insensitive`, and defaults to
 Directory names are displayed in a 16-column field by default. Info placement
 may be `default`, `hidden`, `inline`, `inline-right`, `left`, or `right`. The
 prompt defaults to `>`.
+
+### Theme
 
 The theme accent sets the ANSI color used for the selected row, matches, query,
 prompt, and cursor in interactive search. It may be any ANSI color index from 0
