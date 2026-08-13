@@ -2,11 +2,13 @@ use super::*;
 
 pub(crate) struct Choice {
   pub(crate) command: Command,
+  pub(crate) directory_width: usize,
   pub(crate) now_ns: i64,
 }
 
 impl Choice {
-  const DIRECTORY_WIDTH: usize = 16;
+  #[cfg(test)]
+  const DEFAULT_DIRECTORY_WIDTH: usize = 16;
   const EARLIEST_TIMESTAMP_NS: i64 = 1_000_000_000_000_000_000;
   const EXIT_CODE_WIDTH: usize = 5;
 
@@ -29,13 +31,13 @@ impl Choice {
     let directory = self
       .command
       .directory_name()
-      .map(|directory| directory.truncate(Self::DIRECTORY_WIDTH).into_owned())
+      .map(|directory| directory.truncate(self.directory_width).into_owned())
       .unwrap_or_default();
 
     let width =
       usize::try_from(unicode_display_width::width(&directory)).unwrap();
 
-    directory + &" ".repeat(Self::DIRECTORY_WIDTH.saturating_sub(width))
+    directory + &" ".repeat(self.directory_width.saturating_sub(width))
   }
 
   fn exit_code(&self) -> String {
@@ -141,6 +143,7 @@ mod tests {
         text: "bar".into(),
         timestamp_ns: NOW - 12_000_000_000,
       },
+      directory_width: Choice::DEFAULT_DIRECTORY_WIDTH,
       now_ns: NOW,
     };
 
@@ -158,7 +161,11 @@ mod tests {
       }),
       ratatui::text::Line::from(vec![
         Span::styled(
-          format!(" 12s  {:<width$}  ", "foo", width = Choice::DIRECTORY_WIDTH),
+          format!(
+            " 12s  {:<width$}  ",
+            "foo",
+            width = Choice::DEFAULT_DIRECTORY_WIDTH,
+          ),
           metadata,
         ),
         Span::styled("[1]    ", metadata.fg(Color::Red)),
@@ -177,6 +184,7 @@ mod tests {
             directory: Some(directory.into()),
             ..Default::default()
           },
+          directory_width: Choice::DEFAULT_DIRECTORY_WIDTH,
           now_ns: NOW,
         }
         .directory(),
@@ -198,6 +206,7 @@ mod tests {
           text: "bar".into(),
           timestamp_ns: NOW - 8 * 60 * 1_000_000_000,
         },
+        directory_width: Choice::DEFAULT_DIRECTORY_WIDTH,
         now_ns: NOW,
       }
       .row(),
@@ -214,6 +223,7 @@ mod tests {
           timestamp_ns: NOW,
           ..Default::default()
         },
+        directory_width: Choice::DEFAULT_DIRECTORY_WIDTH,
         now_ns: NOW,
       }
       .row(),
@@ -229,6 +239,7 @@ mod tests {
         timestamp_ns: 1,
         ..Default::default()
       },
+      directory_width: Choice::DEFAULT_DIRECTORY_WIDTH,
       now_ns: NOW,
     };
 
@@ -250,6 +261,7 @@ mod tests {
             timestamp_ns: NOW - age_seconds * 1_000_000_000,
             ..Default::default()
           },
+          directory_width: Choice::DEFAULT_DIRECTORY_WIDTH,
           now_ns: NOW,
         }
         .relative_age(),
@@ -270,6 +282,7 @@ mod tests {
           timestamp_ns: NOW + 1,
           ..Default::default()
         },
+        directory_width: Choice::DEFAULT_DIRECTORY_WIDTH,
         now_ns: NOW,
       }
       .relative_age(),
@@ -282,6 +295,7 @@ mod tests {
           timestamp_ns: 1,
           ..Default::default()
         },
+        directory_width: Choice::DEFAULT_DIRECTORY_WIDTH,
         now_ns: NOW,
       }
       .relative_age(),
@@ -298,6 +312,7 @@ mod tests {
         text: "foo\nbar".into(),
         ..Default::default()
       },
+      directory_width: Choice::DEFAULT_DIRECTORY_WIDTH,
       now_ns: NOW,
     };
 

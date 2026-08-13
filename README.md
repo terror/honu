@@ -69,6 +69,7 @@ shell = "zsh"
 
 [search]
 case = "smart"
+directory_width = 16
 height = 60
 # limit = 10000
 mode = "fuzzy"
@@ -84,7 +85,8 @@ passed to `honu import` takes precedence over this setting.
 Search defaults to 60% of the terminal height with no result limit. The
 optional configured limit is overridden by `--limit`, and height must be
 between 1 and 100. Case matching may be `smart`, `sensitive`, or `insensitive`.
-Search mode may be `fuzzy`, `exact`, or `regex`. The prompt defaults to ` > `.
+Directory names are displayed in a 16-column field by default. Search mode may
+be `fuzzy`, `exact`, or `regex`. The prompt defaults to ` > `.
 
 The theme accent sets the ANSI color used for the selected row, matches, query,
 prompt, and cursor in interactive search. It may be any ANSI color index from
