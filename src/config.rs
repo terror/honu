@@ -8,39 +8,6 @@ pub(crate) struct Config {
   pub(crate) theme: Theme,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize)]
-pub(crate) struct Import {
-  pub(crate) shell: Option<Shell>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(default)]
-pub(crate) struct Search {
-  pub(crate) height: NonZeroU8,
-  pub(crate) limit: Option<usize>,
-}
-
-impl Default for Search {
-  fn default() -> Self {
-    Self {
-      height: NonZeroU8::new(60).unwrap(),
-      limit: None,
-    }
-  }
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(default)]
-pub(crate) struct Theme {
-  pub(crate) accent: u8,
-}
-
-impl Default for Theme {
-  fn default() -> Self {
-    Self { accent: 6 }
-  }
-}
-
 impl Config {
   pub(crate) fn load() -> Result<Self> {
     #[cfg(unix)]
@@ -63,5 +30,40 @@ impl Config {
     }
 
     Ok(config)
+  }
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub(crate) struct Import {
+  pub(crate) shell: Option<Shell>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(default)]
+pub(crate) struct Search {
+  pub(crate) height: NonZeroU8,
+  pub(crate) limit: Option<usize>,
+  pub(crate) prompt: String,
+}
+
+impl Default for Search {
+  fn default() -> Self {
+    Self {
+      height: NonZeroU8::new(60).unwrap(),
+      limit: None,
+      prompt: " > ".into(),
+    }
+  }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(default)]
+pub(crate) struct Theme {
+  pub(crate) accent: u8,
+}
+
+impl Default for Theme {
+  fn default() -> Self {
+    Self { accent: 6 }
   }
 }
