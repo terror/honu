@@ -44,6 +44,7 @@ pub(crate) struct Search {
   pub(crate) case: SearchCase,
   pub(crate) height: NonZeroU8,
   pub(crate) limit: Option<usize>,
+  pub(crate) mode: SearchMode,
   pub(crate) prompt: String,
 }
 
@@ -53,6 +54,7 @@ impl Default for Search {
       case: SearchCase::default(),
       height: NonZeroU8::new(60).unwrap(),
       limit: None,
+      mode: SearchMode::default(),
       prompt: " > ".into(),
     }
   }
@@ -75,6 +77,15 @@ impl From<SearchCase> for CaseMatching {
       SearchCase::Smart => Self::Smart,
     }
   }
+}
+
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum SearchMode {
+  Exact,
+  #[default]
+  Fuzzy,
+  Regex,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
