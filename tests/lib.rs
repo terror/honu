@@ -180,6 +180,7 @@ impl Test {
 
     command
       .current_dir(self.tempdir.path())
+      .env("APPDATA", self.tempdir.path())
       .env("HOME", self.tempdir.path())
       .env("XDG_CONFIG_HOME", self.tempdir.path())
       .env("XDG_DATA_HOME", self.tempdir.path())
