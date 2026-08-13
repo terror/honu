@@ -55,9 +55,9 @@ fn configured_shell_is_used() {
       "honu/config.toml",
       indoc! {
         r#"
-      [import]
-      shell = "zsh"
-      "#
+        [import]
+        shell = "zsh"
+        "#
       },
     )
     .write("history", ": 1:0;foo\n")
@@ -391,9 +391,9 @@ fn shell_argument_takes_precedence_over_config() {
       "honu/config.toml",
       indoc! {
         r#"
-      [import]
-      shell = "zsh"
-      "#
+        [import]
+        shell = "zsh"
+        "#
       },
     )
     .write("history", "foo\n")
