@@ -34,6 +34,7 @@ use {
     fs,
     io::{self, BufRead, BufReader, IsTerminal, Read},
     mem,
+    num::NonZeroU8,
     path::{Path, PathBuf},
     process, str,
     sync::Arc,

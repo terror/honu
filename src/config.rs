@@ -16,14 +16,14 @@ pub(crate) struct Import {
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(default)]
 pub(crate) struct Search {
-  pub(crate) height: u8,
+  pub(crate) height: NonZeroU8,
   pub(crate) limit: Option<usize>,
 }
 
 impl Default for Search {
   fn default() -> Self {
     Self {
-      height: 60,
+      height: NonZeroU8::new(60).unwrap(),
       limit: None,
     }
   }
@@ -58,8 +58,8 @@ impl Config {
     let config: Self =
       confy::load_path(path).context("failed to load configuration")?;
 
-    if config.search.height > 100 {
-      bail!("search height must be between 0 and 100");
+    if config.search.height.get() > 100 {
+      bail!("search height must be between 1 and 100");
     }
 
     Ok(config)
