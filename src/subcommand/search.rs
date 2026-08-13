@@ -12,7 +12,12 @@ impl Search {
   const BATCH_SIZE: usize = 256;
   const CHANNEL_CAPACITY: usize = 8;
 
-  fn load_items(self, database: &Database, sender: &SkimItemSender) -> Result {
+  fn load_items(
+    self,
+    database: &Database,
+    directory_width: usize,
+    sender: &SkimItemSender,
+  ) -> Result {
     let mut batch: Vec<Arc<dyn SkimItem>> =
       Vec::with_capacity(Self::BATCH_SIZE);
 
@@ -22,7 +27,11 @@ impl Search {
       i64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos())?;
 
     database.for_each_command(self.limit, |command| {
-      batch.push(Arc::new(Choice { command, now_ns }));
+      batch.push(Arc::new(Choice {
+        command,
+        directory_width,
+        now_ns,
+      }));
 
       if batch.len() < flush_threshold {
         return true;
@@ -85,7 +94,10 @@ impl Search {
 
     let (sender, receiver) = bounded(Self::CHANNEL_CAPACITY);
 
-    let loader = thread::spawn(move || self.load_items(&database, &sender));
+    let directory_width = config.search.directory_width;
+    let loader = thread::spawn(move || {
+      self.load_items(&database, directory_width, &sender)
+    });
 
     let output = Skim::run_with(options, Some(receiver));
 

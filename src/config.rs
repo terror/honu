@@ -42,6 +42,7 @@ pub(crate) struct Import {
 #[serde(default)]
 pub(crate) struct Search {
   pub(crate) case: SearchCase,
+  pub(crate) directory_width: usize,
   pub(crate) height: NonZeroU8,
   pub(crate) limit: Option<usize>,
   pub(crate) mode: SearchMode,
@@ -52,6 +53,7 @@ impl Default for Search {
   fn default() -> Self {
     Self {
       case: SearchCase::default(),
+      directory_width: 16,
       height: NonZeroU8::new(60).unwrap(),
       limit: None,
       mode: SearchMode::default(),
