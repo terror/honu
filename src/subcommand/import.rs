@@ -9,7 +9,7 @@ pub(crate) struct Import {
 
 impl Import {
   pub(crate) fn run(self) -> Result {
-    let config = config::Config::load()?;
+    let config = Config::load()?;
 
     self
       .shell

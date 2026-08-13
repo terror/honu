@@ -11,6 +11,7 @@ use {
   indicatif::{ProgressBar, ProgressStyle},
   line::Line,
   lines::Lines,
+  config::Config,
   parser::Parser,
   progress::Progress,
   ratatui::{
