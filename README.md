@@ -57,6 +57,48 @@ Otherwise, see below for the complete package list:
 Pre-built binaries for Linux, MacOS, and Windows can be found on
 [the releases page](https://github.com/terror/honu/releases).
 
+## Usage
+
+Add the following command to your `.zshrc` to record commands and bind
+`control-r` to interactive history search:
+
+```zsh
+eval "$(honu init zsh)"
+```
+
+Shell integration is also available for
+[Bash](<https://en.wikipedia.org/wiki/Bash_(Unix_shell)?useskin=vector>) and
+[Fish](https://fishshell.com/) through `honu init`.
+
+To seed the database with your existing shell history, run:
+
+```bash
+honu import
+```
+
+The shell is detected automatically, or may be passed explicitly with
+`honu import bash`, `honu import fish`, or `honu import zsh`.
+
+Press `control-r` to search your recorded history. The current command line is
+used as the initial query, and the selected command replaces it without being
+executed. You can also start a search directly:
+
+```bash
+honu search
+honu search cargo
+```
+
+Use `honu list` to print recent commands and `honu backup` to copy the database:
+
+```bash
+honu list --limit 20
+honu backup history.db
+```
+
+You can check out the
+[full command specification](https://github.com/terror/honu/tree/master/src/subcommand),
+or invoke `honu --help` for more information!
+
 ## Configuration
 
 On Linux and macOS, `honu` reads its TOML configuration from
@@ -88,9 +130,9 @@ accent = 6
 The configured import shell may be `bash`, `fish`, or `zsh`. An explicit shell
 passed to `honu import` takes precedence over this setting.
 
-Search uses 60% of the terminal height by default. The configured height must
-be between 1 and 100. There is no default result limit, and `--limit` overrides
-the configured limit.
+Search uses 60% of the terminal height by default. The configured height must be
+between 1 and 100. There is no default result limit, and `--limit` overrides the
+configured limit.
 
 Case matching may be `smart`, `sensitive`, or `insensitive`, and defaults to
 `smart`. Search mode may be `fuzzy`, `exact`, or `regex`, and defaults to
@@ -98,13 +140,14 @@ Case matching may be `smart`, `sensitive`, or `insensitive`, and defaults to
 
 Directory names are displayed in a 16-column field by default. Info placement
 may be `default`, `hidden`, `inline`, `inline-right`, `left`, or `right`. The
-prompt defaults to ` > `.
+prompt defaults to `>`.
 
 The theme accent sets the ANSI color used for the selected row, matches, query,
-prompt, and cursor in interactive search. It may be any ANSI color index from
-0 to 255 and defaults to 6 (cyan).
+prompt, and cursor in interactive search. It may be any ANSI color index from 0
+to 255 and defaults to 6 (cyan).
 
 ## Prior Art
 
 This project was inspired by tools like
-[atuin](https://github.com/atuinsh/atuin) and [stinkpot](https://tangled.org/oppi.li/stinkpot).
+[atuin](https://github.com/atuinsh/atuin) and
+[stinkpot](https://tangled.org/oppi.li/stinkpot).
