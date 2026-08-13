@@ -4,6 +4,7 @@ use {
   choice::Choice,
   clap::{Parser as Clap, ValueEnum},
   command::Command,
+  config::Config,
   count::Count,
   database::Database,
   honu::Execution,
@@ -11,7 +12,6 @@ use {
   indicatif::{ProgressBar, ProgressStyle},
   line::Line,
   lines::Lines,
-  config::Config,
   parser::Parser,
   progress::Progress,
   ratatui::{
