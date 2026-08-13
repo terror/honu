@@ -4,12 +4,29 @@ use super::*;
 #[serde(default)]
 pub(crate) struct Config {
   pub(crate) import: Import,
+  pub(crate) search: Search,
   pub(crate) theme: Theme,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub(crate) struct Import {
   pub(crate) shell: Option<Shell>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(default)]
+pub(crate) struct Search {
+  pub(crate) height: NonZeroU8,
+  pub(crate) limit: Option<usize>,
+}
+
+impl Default for Search {
+  fn default() -> Self {
+    Self {
+      height: NonZeroU8::new(60).unwrap(),
+      limit: None,
+    }
+  }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -38,6 +55,13 @@ impl Config {
       .context("failed to determine local config directory")?
       .join("honu/config.toml");
 
-    confy::load_path(path).context("failed to load configuration")
+    let config: Self =
+      confy::load_path(path).context("failed to load configuration")?;
+
+    if config.search.height.get() > 100 {
+      bail!("search height must be between 1 and 100");
+    }
+
+    Ok(config)
   }
 }

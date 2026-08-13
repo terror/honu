@@ -46,7 +46,7 @@ impl Search {
     Ok(())
   }
 
-  pub(crate) fn run(self) -> Result {
+  pub(crate) fn run(mut self) -> Result {
     let config = Config::load()?;
 
     let database = Database::load()?;
@@ -56,6 +56,8 @@ impl Search {
     }
 
     let accent = config.theme.accent;
+
+    self.limit = self.limit.or(config.search.limit);
 
     let options = SkimOptionsBuilder::default()
       .color(format!(
@@ -69,7 +71,7 @@ impl Search {
           info:-1:dim,\
           spinner:-1:dim"
       ))
-      .height("60%")
+      .height(format!("{}%", config.search.height))
       .info("right")
       .multi(false)
       .multi_select_icon("")

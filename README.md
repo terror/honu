@@ -67,12 +67,20 @@ uses `%APPDATA%\honu\config.toml`:
 [import]
 shell = "zsh"
 
+[search]
+height = 60
+# limit = 10000
+
 [theme]
 accent = 6
 ```
 
 The configured import shell may be `bash`, `fish`, or `zsh`. An explicit shell
 passed to `honu import` takes precedence over this setting.
+
+Search defaults to 60% of the terminal height with no result limit. The
+optional configured limit is overridden by `--limit`, and height must be
+between 1 and 100.
 
 The theme accent sets the ANSI color used for the selected row, matches, query,
 prompt, and cursor in interactive search. It may be any ANSI color index from
