@@ -61,10 +61,6 @@ impl Test {
     self
   }
 
-  fn config_path(&self) -> PathBuf {
-    self.path("honu/config.toml")
-  }
-
   fn database(&self) -> Connection {
     self.database_at("honu/history.db")
   }
@@ -256,13 +252,6 @@ impl Test {
 
   fn write(self, path: impl AsRef<Path>, contents: impl AsRef<[u8]>) -> Self {
     let path = self.path(path);
-    fs::create_dir_all(path.parent().unwrap()).unwrap();
-    fs::write(path, contents).unwrap();
-    self
-  }
-
-  fn write_config(self, contents: impl AsRef<[u8]>) -> Self {
-    let path = self.config_path();
     fs::create_dir_all(path.parent().unwrap()).unwrap();
     fs::write(path, contents).unwrap();
     self

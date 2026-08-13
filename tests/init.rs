@@ -9,7 +9,7 @@ fn shells() {
       .expected_stdout(&expected.replace('\\', "/"))
       .run()
       .inspect(|test| {
-        assert!(!test.config_path().exists());
+        assert!(!test.path("honu/config.toml").exists());
         assert!(!test.path("honu/history.db").exists());
       });
   }
