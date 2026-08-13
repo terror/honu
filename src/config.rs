@@ -12,6 +12,18 @@ pub(crate) struct Import {
 
 impl Config {
   pub(crate) fn load() -> Result<Self> {
-    confy::load("honu", "config").context("failed to load configuration")
+    #[cfg(unix)]
+    let path =
+      BaseDirectories::with_prefix("honu").place_config_file("config.toml")?;
+
+    #[cfg(windows)]
+    let path = env::var_os("XDG_CONFIG_HOME")
+      .map(PathBuf::from)
+      .filter(|path| path.is_absolute())
+      .or_else(|| env::var_os("APPDATA").map(PathBuf::from))
+      .context("failed to determine local config directory")?
+      .join("honu/config.toml");
+
+    confy::load_path(path).context("failed to load configuration")
   }
 }

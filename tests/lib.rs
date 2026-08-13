@@ -62,13 +62,7 @@ impl Test {
   }
 
   fn config_path(&self) -> PathBuf {
-    #[cfg(not(windows))]
-    let path = "honu/config.toml";
-
-    #[cfg(windows)]
-    let path = "honu/config/config.toml";
-
-    self.path(path)
+    self.path("honu/config.toml")
   }
 
   fn database(&self) -> Connection {
