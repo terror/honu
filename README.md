@@ -56,7 +56,7 @@ Otherwise, see below for the complete package list:
 
 `honu` reads its configuration from `$XDG_CONFIG_HOME/honu/config.toml`, or
 `~/.config/honu/config.toml` when `XDG_CONFIG_HOME` is unset. On Windows, it
-uses `%APPDATA%\honu\config.toml`:
+uses `%APPDATA%\honu\config\config.toml`:
 
 ```toml
 [import]
