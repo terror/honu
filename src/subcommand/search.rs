@@ -75,7 +75,7 @@ impl Search {
       .info("right")
       .multi(false)
       .multi_select_icon("")
-      .prompt(" > ")
+      .prompt(config.search.prompt)
       .query(&self.query)
       .selector_icon("")
       .build()?;
