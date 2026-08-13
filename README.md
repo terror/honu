@@ -66,10 +66,17 @@ uses `%APPDATA%\honu\config.toml`:
 ```toml
 [import]
 shell = "zsh"
+
+[theme]
+accent = 6
 ```
 
 The configured import shell may be `bash`, `fish`, or `zsh`. An explicit shell
 passed to `honu import` takes precedence over this setting.
+
+The theme accent sets the ANSI color used for the selected row, matches, query,
+prompt, and cursor in interactive search. It may be any ANSI color index from
+0 to 255 and defaults to 6 (cyan).
 
 ## Prior Art
 
