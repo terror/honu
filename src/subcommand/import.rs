@@ -8,15 +8,13 @@ pub(crate) struct Import {
 }
 
 impl Import {
-  pub(crate) fn run(
-    self,
-    database: &Database,
-    configured_shell: Option<Shell>,
-  ) -> Result {
+  pub(crate) fn run(self) -> Result {
+    let config = config::Config::load()?;
+
     self
       .shell
-      .or(configured_shell)
+      .or(config.import.shell)
       .map_or_else(Shell::detect, Ok)?
-      .import(database, self.path.as_deref())
+      .import(&Database::load()?, self.path.as_deref())
   }
 }

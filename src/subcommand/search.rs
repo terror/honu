@@ -46,7 +46,9 @@ impl Search {
     Ok(())
   }
 
-  pub(crate) fn run(self, database: Database) -> Result {
+  pub(crate) fn run(self) -> Result {
+    let database = Database::load()?;
+
     if !database.has_executions()? {
       return Ok(());
     }

@@ -21,7 +21,9 @@ pub(crate) struct Add {
 }
 
 impl Add {
-  pub(crate) fn run(self, database: &Database) -> Result {
+  pub(crate) fn run(self) -> Result {
+    let database = Database::load()?;
+
     let timestamp_ns = if let Some(timestamp_ns) = self.timestamp_ns {
       timestamp_ns
     } else {

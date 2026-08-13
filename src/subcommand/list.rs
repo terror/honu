@@ -7,7 +7,9 @@ pub(crate) struct List {
 }
 
 impl List {
-  pub(crate) fn run(self, database: &Database) -> Result {
+  pub(crate) fn run(self) -> Result {
+    let database = Database::load()?;
+
     for (_, execution) in database.recent(self.limit)? {
       println!(
         "{}\t{}\t{}",
