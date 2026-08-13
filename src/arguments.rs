@@ -9,6 +9,8 @@ pub(crate) struct Arguments {
 
 impl Arguments {
   pub(crate) fn run(self) -> Result {
+    let config = config::Config::load()?;
+
     #[cfg(unix)]
     let path =
       BaseDirectories::with_prefix("honu").place_data_file("history.db")?;
@@ -27,6 +29,8 @@ impl Arguments {
       directory.join("history.db")
     };
 
-    self.subcommand.run(Database::try_from(path.as_path())?)
+    self
+      .subcommand
+      .run(Database::try_from(path.as_path())?, &config)
   }
 }

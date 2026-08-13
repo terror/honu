@@ -8,9 +8,14 @@ pub(crate) struct Import {
 }
 
 impl Import {
-  pub(crate) fn run(self, database: &Database) -> Result {
+  pub(crate) fn run(
+    self,
+    database: &Database,
+    configured_shell: Option<Shell>,
+  ) -> Result {
     self
       .shell
+      .or(configured_shell)
       .map_or_else(Shell::detect, Ok)?
       .import(database, self.path.as_deref())
   }

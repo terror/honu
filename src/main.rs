@@ -20,6 +20,7 @@ use {
   record::Record,
   records::Records,
   rusqlite::{Connection, MAIN_DB, Transaction, TransactionBehavior, params},
+  serde::{Deserialize, Serialize},
   shell::Shell,
   skim::{
     DisplayContext, Skim, SkimItem, SkimItemSender,
@@ -52,6 +53,7 @@ use {std::os::unix::fs::PermissionsExt, xdg::BaseDirectories};
 mod arguments;
 mod choice;
 mod command;
+mod config;
 mod count;
 mod database;
 mod line;

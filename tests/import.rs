@@ -74,6 +74,34 @@ fn detects_shell() {
 }
 
 #[test]
+fn configured_shell_is_used() {
+  Test::new()
+    .write("honu/config.toml", "[import]\nshell = \"zsh\"\n")
+    .write("history", ": 1:0;foo\n")
+    .env("SHELL", "/bin/elvish")
+    .arguments(["import", "--path", "history"])
+    .expected_stdout("imported 1 execution from history\n")
+    .run()
+    .inspect(|test| {
+      assert_eq!(test.executions()[0].shell.as_deref(), Some("zsh"));
+    });
+}
+
+#[test]
+fn shell_argument_takes_precedence_over_config() {
+  Test::new()
+    .write("honu/config.toml", "[import]\nshell = \"zsh\"\n")
+    .write("history", "foo\n")
+    .env("SHELL", "/bin/elvish")
+    .arguments(["import", "--path", "history", "bash"])
+    .expected_stdout("imported 1 execution from history\n")
+    .run()
+    .inspect(|test| {
+      assert_eq!(test.executions()[0].shell.as_deref(), Some("bash"));
+    });
+}
+
+#[test]
 fn defaults_are_shell_specific() {
   let test = Test::new()
     .write(".bash_history", "foo\n")
