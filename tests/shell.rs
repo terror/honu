@@ -174,23 +174,26 @@ fn fish_records_execution() {
     })
     .run()
     .inspect(|test| {
-      let mut executions = test
-        .executions()
-        .into_iter()
-        .map(|execution| {
-          (execution.command, execution.exit_code, execution.shell)
-        })
-        .collect::<Vec<_>>();
-
-      executions.sort();
+      let executions = test.executions();
 
       assert_eq!(
-        executions,
+        executions
+          .iter()
+          .map(|execution| {
+            (
+              execution.command.as_str(),
+              execution.exit_code,
+              execution.shell.as_deref(),
+            )
+          })
+          .collect::<Vec<_>>(),
         [
-          ("false".into(), Some(1), Some("fish".into())),
-          ("true".into(), Some(0), Some("fish".into())),
+          ("true", Some(0), Some("fish")),
+          ("false", Some(1), Some("fish")),
         ],
       );
+
+      assert!(executions[0].timestamp_ns < executions[1].timestamp_ns);
     });
 }
 

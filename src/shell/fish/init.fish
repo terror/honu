@@ -6,6 +6,8 @@ end
 set -g __honu_command
 set -g __honu_directory
 set -g __honu_started_at_ns
+set -g __honu_timestamp_second
+set -g __honu_timestamp_sequence 0
 
 function _honu_preexec --on-event fish_preexec
   if test -n "$fish_private_mode"
@@ -26,7 +28,16 @@ function _honu_preexec --on-event fish_preexec
   set -g __honu_command "$argv[1]"
   set -g __honu_directory "$PWD"
   set -l started_at (command date +%s)
-  set -g __honu_started_at_ns (string join '' "$started_at" 000000000)
+
+  if test "$started_at" = "$__honu_timestamp_second"
+    set -g __honu_timestamp_sequence (math "$__honu_timestamp_sequence + 1")
+  else
+    set -g __honu_timestamp_second "$started_at"
+    set -g __honu_timestamp_sequence 0
+  end
+
+  set -l timestamp_suffix (printf '%09d' "$__honu_timestamp_sequence")
+  set -g __honu_started_at_ns (string join '' "$started_at" "$timestamp_suffix")
 end
 
 function _honu_postexec --on-event fish_postexec
