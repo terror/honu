@@ -13,6 +13,16 @@ function _honu_preexec --on-event fish_preexec
     return
   end
 
+  if functions -q fish_should_add_to_history
+    if not fish_should_add_to_history "$argv[1]"
+      set -e __honu_command
+      return
+    end
+  else if string match -qr '^ ' -- "$argv[1]"
+    set -e __honu_command
+    return
+  end
+
   set -g __honu_command "$argv[1]"
   set -g __honu_directory "$PWD"
   set -l started_at (command date +%s)
