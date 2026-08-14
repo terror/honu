@@ -93,6 +93,7 @@ _honu_search() {
 
   if (( exit_code == 0 )) && [[ -n "$selected" ]]; then
     BUFFER="$selected"
+    # shellcheck disable=SC2034 # CURSOR is read by Zsh's line editor.
     CURSOR="${#BUFFER}"
   fi
 

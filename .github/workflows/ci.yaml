@@ -65,8 +65,10 @@ jobs:
     - name: Check for Forbidden Words
       run: ./bin/forbid
 
-    - name: Check /bin scripts
-      run: shellcheck bin/*
+    - name: Check shell scripts
+      run: |
+        shellcheck bin/* src/shell/bash/init.bash
+        shellcheck --shell=bash src/shell/zsh/init.zsh
 
   msrv:
     runs-on: ubuntu-latest
