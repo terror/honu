@@ -6,33 +6,26 @@ pub(crate) trait Truncate {
 
 impl Truncate for str {
   fn truncate(&self, width: usize) -> Cow<'_, str> {
-    let width = u64::try_from(width).unwrap();
+    let max_width = u64::try_from(width).unwrap();
 
-    if unicode_display_width::width(self) <= width {
+    if unicode_display_width::width(self) <= max_width {
       return Cow::Borrowed(self);
     }
 
-    let Some(width) = width.checked_sub(1) else {
+    let Some(content_width) = max_width.checked_sub(1) else {
       return Cow::Borrowed("");
     };
 
-    let mut truncated = String::new();
-    let mut used = 0;
+    let end = self
+      .grapheme_indices(true)
+      .scan(0, |used, (index, grapheme)| {
+        *used += unicode_display_width::width(grapheme);
+        (*used <= content_width).then_some(index + grapheme.len())
+      })
+      .last()
+      .unwrap_or(0);
 
-    for grapheme in self.graphemes(true) {
-      let grapheme_width = unicode_display_width::width(grapheme);
-
-      if used + grapheme_width > width {
-        break;
-      }
-
-      truncated.push_str(grapheme);
-      used += grapheme_width;
-    }
-
-    truncated.push('…');
-
-    Cow::Owned(truncated)
+    Cow::Owned(format!("{}…", &self[..end]))
   }
 }
 
