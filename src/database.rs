@@ -383,11 +383,13 @@ impl Database {
     input.reserve(previous_len, records_len);
 
     input.update_before(
-      previous.iter().map(|(fingerprint, _)| fingerprint).cloned(),
+      previous
+        .iter()
+        .map(|(fingerprint, _)| fingerprint.as_slice()),
     );
 
     input
-      .update_after(records.iter().map(|record| &record.fingerprint).cloned());
+      .update_after(records.iter().map(|record| record.fingerprint.as_slice()));
 
     let diff = Diff::compute(Algorithm::MyersMinimal, &input);
 
