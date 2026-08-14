@@ -95,34 +95,17 @@ impl Database {
     let limit = limit
       .map(i64::try_from)
       .transpose()
-      .context("command limit exceeds SQLite integer range")?;
+      .context("command limit exceeds SQLite integer range")?
+      .unwrap_or(-1);
 
-    let query = if limit.is_some() {
-      "SELECT
-         text,
-         timestamp_ns,
-         exit_code,
-         directory
+    let mut statement = self.connection.prepare(
+      "SELECT text, timestamp_ns, exit_code, directory
        FROM commands
        ORDER BY timestamp_ns DESC, execution_id DESC
-       LIMIT ?1"
-    } else {
-      "SELECT
-         text,
-         timestamp_ns,
-         exit_code,
-         directory
-       FROM commands
-       ORDER BY timestamp_ns DESC, execution_id DESC"
-    };
+       LIMIT ?1",
+    )?;
 
-    let mut statement = self.connection.prepare(query)?;
-
-    let mut rows = if let Some(limit) = limit {
-      statement.query([limit])?
-    } else {
-      statement.query([])?
-    };
+    let mut rows = statement.query([limit])?;
 
     while let Some(row) = rows.next()? {
       if !callback(Command::try_from(row)?) {
