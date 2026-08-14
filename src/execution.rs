@@ -29,6 +29,23 @@ impl Execution {
   }
 }
 
+impl FromRow for Execution {
+  fn from_row(row: &Row<'_>) -> Result<Self> {
+    Ok(Self {
+      command: row.get("command")?,
+      directory: row
+        .get::<_, Option<String>>("directory")?
+        .map(PathBuf::from),
+      duration_ns: row.get("duration_ns")?,
+      exit_code: row.get("exit_code")?,
+      hostname: row.get("hostname")?,
+      session: row.get("session")?,
+      shell: row.get("shell")?,
+      timestamp_ns: row.get("timestamp_ns")?,
+    })
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

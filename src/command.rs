@@ -1,20 +1,34 @@
 use super::*;
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
-pub(crate) struct Command {
-  pub(crate) directory: Option<PathBuf>,
-  pub(crate) exit_code: Option<i32>,
-  pub(crate) text: String,
-  pub(crate) timestamp_ns: i64,
+pub struct Command {
+  pub directory: Option<PathBuf>,
+  pub exit_code: Option<i32>,
+  pub text: String,
+  pub timestamp_ns: i64,
 }
 
 impl Command {
-  pub(crate) fn directory_name(&self) -> Option<Cow<'_, str>> {
+  #[must_use]
+  pub fn directory_name(&self) -> Option<Cow<'_, str>> {
     self.directory.as_deref().map(|directory| {
       directory
         .file_name()
         .unwrap_or(directory.as_os_str())
         .to_string_lossy()
+    })
+  }
+}
+
+impl FromRow for Command {
+  fn from_row(row: &Row<'_>) -> Result<Self> {
+    Ok(Self {
+      directory: row
+        .get::<_, Option<String>>("directory")?
+        .map(PathBuf::from),
+      exit_code: row.get("exit_code")?,
+      text: row.get("text")?,
+      timestamp_ns: row.get("timestamp_ns")?,
     })
   }
 }
