@@ -907,14 +907,13 @@ mod tests {
     assert!(
       database
         .connection()
-        .query_row(
-          indoc! {
+        .query_row(indoc! {
             "
-          EXPLAIN QUERY PLAN
-          SELECT text, timestamp_ns, exit_code, directory
-          FROM commands
-          ORDER BY timestamp_ns DESC, execution_id DESC
-          "
+            EXPLAIN QUERY PLAN
+            SELECT text, timestamp_ns, exit_code, directory
+            FROM commands
+            ORDER BY timestamp_ns DESC, execution_id DESC
+            "
           },
           [],
           |row| row.get::<_, String>(3),
