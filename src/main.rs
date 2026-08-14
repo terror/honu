@@ -9,6 +9,7 @@ use {
   honu::{Command, Execution},
   imara_diff::{Algorithm, Diff, InternedInput},
   indicatif::{ProgressBar, ProgressStyle},
+  indoc::indoc,
   line::Line,
   lines::Lines,
   parser::Parser,
