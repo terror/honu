@@ -40,7 +40,7 @@ use {
     thread,
     time::{Duration, SystemTime, UNIX_EPOCH},
   },
-  str_ext::StrExt,
+  truncate::Truncate,
   subcommand::Subcommand,
   tally::Tally,
   tempfile::NamedTempFile,
@@ -63,7 +63,7 @@ mod progress;
 mod record;
 mod records;
 mod shell;
-mod str_ext;
+mod truncate;
 mod subcommand;
 mod tally;
 
