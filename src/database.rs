@@ -445,20 +445,15 @@ impl TryFrom<Connection> for Database {
     let version: i64 =
       transaction.query_row("PRAGMA user_version", [], |row| row.get(0))?;
 
-    let Ok(version) = usize::try_from(version) else {
-      bail!(
-        "database schema version {version} is unsupported; expected {}",
-        Self::SCHEMA_VERSION,
-      );
-    };
+    let schema_version = version;
 
-    if version > Self::SCHEMA_VERSION {
-      bail!(
-        "database schema version {version} is unsupported; expected \
-         {}",
+    let version = match usize::try_from(schema_version) {
+      Ok(version) if version <= Self::SCHEMA_VERSION => version,
+      _ => bail!(
+        "database schema version {schema_version} is unsupported; expected {}",
         Self::SCHEMA_VERSION,
-      );
-    }
+      ),
+    };
 
     for (version, migration) in
       Self::MIGRATIONS.iter().enumerate().skip(version)
