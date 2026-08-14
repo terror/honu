@@ -707,15 +707,14 @@ mod tests {
     assert_eq!(
       database
         .connection()
-        .query_row(
-          indoc! {
+        .query_row(indoc! {
             "
-          SELECT
-            (SELECT COUNT(*) FROM commands),
-            (SELECT COUNT(*) FROM executions),
-            (SELECT COUNT(*) FROM import_sources),
-            (SELECT COUNT(*) FROM source_records)
-          "
+            SELECT
+              (SELECT COUNT(*) FROM commands),
+              (SELECT COUNT(*) FROM executions),
+              (SELECT COUNT(*) FROM import_sources),
+              (SELECT COUNT(*) FROM source_records)
+            "
           },
           [],
           |row| {
