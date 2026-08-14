@@ -420,38 +420,20 @@ impl Database {
   }
 
   fn reserve_source(&self, format: &str, path: &[u8]) -> Result<(String, i64)> {
-    let transaction = Transaction::new_unchecked(
-      &self.connection,
-      TransactionBehavior::Immediate,
-    )?;
-
     let source_id = Uuid::new_v4().to_string();
 
-    transaction.execute(
-      "INSERT INTO import_sources (id, format, path)
-       VALUES (?1, ?2, ?3)
-       ON CONFLICT (format, path) DO NOTHING",
-      params![source_id, format, path],
-    )?;
-
-    transaction.execute(
-      "UPDATE import_sources
-       SET generation = generation + 1
-       WHERE format = ?1 AND path = ?2",
-      params![format, path],
-    )?;
-
-    let source = transaction.query_row(
-      "SELECT id, generation
-       FROM import_sources
-       WHERE format = ?1 AND path = ?2",
-      params![format, path],
-      |row| Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?)),
-    )?;
-
-    transaction.commit()?;
-
-    Ok(source)
+    self
+      .connection
+      .query_row(
+        "INSERT INTO import_sources (id, format, path, generation)
+       VALUES (?1, ?2, ?3, 1)
+       ON CONFLICT (format, path) DO UPDATE SET
+         generation = import_sources.generation + 1
+       RETURNING id, generation",
+        params![source_id, format, path],
+        |row| Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?)),
+      )
+      .map_err(Into::into)
   }
 }
 
