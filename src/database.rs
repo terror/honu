@@ -1614,11 +1614,7 @@ mod tests {
           indoc! {
             "
             INSERT INTO commands (
-              text,
-              timestamp_ns,
-              execution_id,
-              exit_code,
-              directory
+              text, timestamp_ns, execution_id, exit_code, directory
             ) VALUES ('foo', 0, 'bar', NULL, NULL)
             "
           },
