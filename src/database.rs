@@ -348,23 +348,16 @@ impl Database {
       LIMIT ?1",
     )?;
 
-    let rows = statement.query_and_then([limit], |row| {
-      Ok::<_, honu::Error>((
-        row.get::<_, String>("id")?,
-        Execution::try_from(row)?,
-      ))
+    let rows = statement.query_and_then([limit], |row| -> Result<_> {
+      let id = row.get::<_, String>("id")?;
+      let execution = Execution::try_from(row)?;
+      let id = Uuid::parse_str(&id)
+        .with_context(|| format!("invalid execution ID `{id}`"))?;
+
+      Ok((id, execution))
     })?;
 
-    rows
-      .map(|row| {
-        let (id, execution) = row?;
-
-        let id = Uuid::parse_str(&id)
-          .with_context(|| format!("invalid execution ID `{id}`"))?;
-
-        Ok((id, execution))
-      })
-      .collect()
+    rows.collect()
   }
 
   fn reconcile(
