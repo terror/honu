@@ -4,8 +4,8 @@ use super::*;
 use std::os::unix::fs::PermissionsExt;
 
 #[test]
-fn backup() {
-  let test = Test::new()
+fn backup_copies_executions() {
+  Test::new()
     .write("history", "foo\n")
     .arguments(["import", "--path", "history", "zsh"])
     .expected_stdout("imported 1 execution from history\n")
@@ -24,8 +24,15 @@ fn backup() {
         1,
       );
     });
+}
 
-  #[cfg(unix)]
+#[cfg(unix)]
+#[test]
+fn backup_has_private_permissions() {
+  let test = Test::new()
+    .arguments(["backup", "foo/bar/honu.sqlite"])
+    .run();
+
   assert_eq!(
     test
       .path("foo/bar/honu.sqlite")
@@ -36,39 +43,6 @@ fn backup() {
       & 0o777,
     0o600,
   );
-
-  test
-    .arguments(["backup", "foo/bar/honu.sqlite"])
-    .expected_stderr(
-      "error: backup `foo/bar/honu.sqlite` already exists; use `--force` to overwrite it\n",
-    )
-    .expected_status(1).run()
-    .write(
-      "history",
-      indoc! {
-        "
-        foo
-        bar
-        "
-      },
-    )
-    .arguments(["import", "--path", "history", "zsh"])
-    .expected_stdout("imported 1 execution from history\n")
-    .run()
-    .arguments(["backup", "--force", "foo/bar/honu.sqlite"])
-    .run()
-    .inspect(|test| {
-      let database = test.database_at("foo/bar/honu.sqlite");
-
-      assert_eq!(
-        database
-          .query_row("SELECT COUNT(*) FROM executions", [], |row| {
-            row.get::<_, i64>(0)
-          })
-          .unwrap(),
-        2,
-      );
-    });
 }
 
 #[test]
@@ -114,4 +88,54 @@ fn backup_is_usable_application_database() {
         2,
       );
     });
+}
+
+#[test]
+fn backup_overwrites_existing_destination_with_force() {
+  Test::new()
+    .write("history", "foo\n")
+    .arguments(["import", "--path", "history", "zsh"])
+    .expected_stdout("imported 1 execution from history\n")
+    .run()
+    .arguments(["backup", "foo/bar/honu.sqlite"])
+    .run()
+    .write(
+      "history",
+      indoc! {
+        "
+        foo
+        bar
+        "
+      },
+    )
+    .arguments(["import", "--path", "history", "zsh"])
+    .expected_stdout("imported 1 execution from history\n")
+    .run()
+    .arguments(["backup", "--force", "foo/bar/honu.sqlite"])
+    .run()
+    .inspect(|test| {
+      let database = test.database_at("foo/bar/honu.sqlite");
+
+      assert_eq!(
+        database
+          .query_row("SELECT COUNT(*) FROM executions", [], |row| {
+            row.get::<_, i64>(0)
+          })
+          .unwrap(),
+        2,
+      );
+    });
+}
+
+#[test]
+fn backup_refuses_existing_destination_unless_forced() {
+  Test::new()
+    .arguments(["backup", "foo/bar/honu.sqlite"])
+    .run()
+    .arguments(["backup", "foo/bar/honu.sqlite"])
+    .expected_stderr(
+      "error: backup `foo/bar/honu.sqlite` already exists; use `--force` to overwrite it\n",
+    )
+    .expected_status(1)
+    .run();
 }
