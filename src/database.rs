@@ -274,12 +274,12 @@ impl Database {
     let directory = execution.directory()?;
 
     self.connection.execute(indoc! {
-      "
-      INSERT INTO executions (
-        id, command, timestamp_ns, duration_ns, exit_code, directory, session, hostname, shell
-      ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
-      "
-    },
+        "
+        INSERT INTO executions (
+          id, command, timestamp_ns, duration_ns, exit_code, directory, session, hostname, shell
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
+        "
+      },
       params![
         id.to_string(),
         execution.command,
