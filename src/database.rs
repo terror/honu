@@ -707,7 +707,8 @@ mod tests {
     assert_eq!(
       database
         .connection()
-        .query_row(indoc! {
+        .query_row(
+          indoc! {
             "
             SELECT
               (SELECT COUNT(*) FROM commands),
@@ -907,7 +908,8 @@ mod tests {
     assert!(
       database
         .connection()
-        .query_row(indoc! {
+        .query_row(
+          indoc! {
             "
             EXPLAIN QUERY PLAN
             SELECT text, timestamp_ns, exit_code, directory
@@ -1586,7 +1588,8 @@ mod tests {
     assert!(
       database
         .connection()
-        .execute(indoc! {
+        .execute(
+          indoc! {
             "
             INSERT INTO commands (
               text, timestamp_ns, execution_id, exit_code, directory
