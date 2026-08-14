@@ -1,10 +1,10 @@
 use super::*;
 
-pub(crate) trait StrExt {
+pub(crate) trait Truncate {
   fn truncate(&self, width: usize) -> Cow<'_, str>;
 }
 
-impl StrExt for str {
+impl Truncate for str {
   fn truncate(&self, width: usize) -> Cow<'_, str> {
     let width = u64::try_from(width).unwrap();
 
