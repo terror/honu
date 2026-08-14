@@ -58,7 +58,7 @@ _honu_precmd() {
 
 _honu_arm() {
   local history
-  history="$(HISTTIMEFORMAT= builtin history 1)"
+  history="$(HISTTIMEFORMAT='' builtin history 1)"
   history="${history#"${history%%[![:space:]]*}"}"
   __honu_history_number="${history%%[[:space:]]*}"
   __honu_ready=1
@@ -78,7 +78,7 @@ _honu_debug() {
   __honu_ready=""
 
   local history
-  history="$(HISTTIMEFORMAT= builtin history 1)"
+  history="$(HISTTIMEFORMAT='' builtin history 1)"
   history="${history#"${history%%[![:space:]]*}"}"
   local history_number="${history%%[[:space:]]*}"
   history="${history#*[[:space:]]}"
@@ -115,6 +115,7 @@ if [[ $- == *i* && -z "${__honu_initialized:-}" ]]; then
     __honu_previous_debug_trap="${__honu_previous_debug_trap#trap -- \'}"
     __honu_previous_debug_trap="${__honu_previous_debug_trap%\' DEBUG}"
     eval "__honu_previous_debug_trap='$__honu_previous_debug_trap'"
+    # shellcheck disable=SC2064 # Expand the previous trap now, but preserve $? for DEBUG.
     trap "$__honu_previous_debug_trap
 _honu_debug \"\$?\"" DEBUG
   else
@@ -124,6 +125,7 @@ _honu_debug \"\$?\"" DEBUG
   if [[ "$(declare -p PROMPT_COMMAND 2>/dev/null)" == "declare -a"* ]]; then
     PROMPT_COMMAND=(_honu_precmd "${PROMPT_COMMAND[@]}" _honu_arm)
   else
+    # shellcheck disable=SC2178 # PROMPT_COMMAND may be either an array or a scalar.
     PROMPT_COMMAND="_honu_precmd
 ${PROMPT_COMMAND-}
 _honu_arm"
