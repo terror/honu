@@ -95,15 +95,7 @@ impl Test {
       .prepare(
         indoc! {
           "
-          SELECT
-            command,
-            timestamp_ns,
-            duration_ns,
-            exit_code,
-            directory,
-            session,
-            hostname,
-            shell
+          SELECT command, timestamp_ns, duration_ns, exit_code, directory, session, hostname, shell
           FROM executions
           ORDER BY timestamp_ns, id
           "
