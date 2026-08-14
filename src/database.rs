@@ -176,15 +176,7 @@ impl Database {
     let inserted = {
       let mut statement = transaction.prepare(
         "INSERT INTO executions (
-          id,
-          command,
-          timestamp_ns,
-          duration_ns,
-          exit_code,
-          directory,
-          session,
-          hostname,
-          shell
+          id, command, timestamp_ns, duration_ns, exit_code, directory, session, hostname, shell
         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
         ON CONFLICT (id) DO UPDATE SET
           command = excluded.command,
@@ -278,15 +270,7 @@ impl Database {
 
     self.connection.execute(
       "INSERT INTO executions (
-        id,
-        command,
-        timestamp_ns,
-        duration_ns,
-        exit_code,
-        directory,
-        session,
-        hostname,
-        shell
+        id, command, timestamp_ns, duration_ns, exit_code, directory, session, hostname, shell
       ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
       params![
         id.to_string(),
@@ -335,16 +319,7 @@ impl Database {
       .context("execution limit exceeds SQLite integer range")?;
 
     let mut statement = self.connection.prepare(
-      "SELECT
-        id,
-        command,
-        timestamp_ns,
-        duration_ns,
-        exit_code,
-        directory,
-        session,
-        hostname,
-        shell
+      "SELECT id, command, timestamp_ns, duration_ns, exit_code, directory, session, hostname, shell
       FROM executions
       ORDER BY timestamp_ns DESC, id DESC
       LIMIT ?1",
@@ -417,10 +392,9 @@ impl Database {
       .connection
       .query_row(
         "INSERT INTO import_sources (id, format, path, generation)
-       VALUES (?1, ?2, ?3, 1)
-       ON CONFLICT (format, path) DO UPDATE SET
-         generation = import_sources.generation + 1
-       RETURNING id, generation",
+         VALUES (?1, ?2, ?3, 1)
+         ON CONFLICT (format, path) DO UPDATE SET generation = import_sources.generation + 1
+         RETURNING id, generation",
         params![source_id, format, path],
         |row| Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?)),
       )
