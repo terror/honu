@@ -136,7 +136,20 @@ impl Database {
   ) -> Result<usize> {
     let path = path.as_os_str().as_encoded_bytes();
 
-    let (source_id, generation) = self.reserve_source(format, path)?;
+    let source_id = Uuid::new_v4().to_string();
+
+    let (source_id, generation) = self.connection.query_row(
+      indoc! {
+        "
+        INSERT INTO import_sources (id, format, path, generation)
+        VALUES (?1, ?2, ?3, 1)
+        ON CONFLICT (format, path) DO UPDATE SET generation = import_sources.generation + 1
+        RETURNING id, generation
+        "
+      },
+      params![source_id, format, path],
+      |row| Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?)),
+    )?;
 
     let records = records.into_iter().collect::<Result<Vec<_>>>()?;
 
@@ -393,25 +406,6 @@ impl Database {
       .collect();
 
     Ok(identifiers)
-  }
-
-  fn reserve_source(&self, format: &str, path: &[u8]) -> Result<(String, i64)> {
-    let source_id = Uuid::new_v4().to_string();
-
-    self
-      .connection
-      .query_row(indoc! {
-          "
-          INSERT INTO import_sources (id, format, path, generation)
-          VALUES (?1, ?2, ?3, 1)
-          ON CONFLICT (format, path) DO UPDATE SET generation = import_sources.generation + 1
-          RETURNING id, generation
-          "
-        },
-        params![source_id, format, path],
-        |row| Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?)),
-      )
-      .map_err(Into::into)
   }
 }
 
@@ -1391,7 +1385,9 @@ mod tests {
           "test",
           Path::new("foo"),
           iter::once_with(|| {
-            database.reserve_source("test", b"foo").unwrap();
+            database
+              .import("test", Path::new("foo"), iter::empty(), |_| {})
+              .unwrap();
 
             Ok(Record {
               execution: Execution {
