@@ -100,11 +100,11 @@ impl Database {
 
     let mut statement = self.connection.prepare(indoc! {
       "
-        SELECT text, timestamp_ns, exit_code, directory
-        FROM commands
-        ORDER BY timestamp_ns DESC, execution_id DESC
-        LIMIT ?1
-        "
+      SELECT text, timestamp_ns, exit_code, directory
+      FROM commands
+      ORDER BY timestamp_ns DESC, execution_id DESC
+      LIMIT ?1
+      "
     })?;
 
     let mut rows = statement.query([limit])?;
@@ -161,11 +161,11 @@ impl Database {
     let previous = {
       let mut statement = transaction.prepare(indoc! {
         "
-          SELECT fingerprint, execution_id
-          FROM source_records
-          WHERE source_id = ?1
-          ORDER BY position
-          "
+        SELECT fingerprint, execution_id
+        FROM source_records
+        WHERE source_id = ?1
+        ORDER BY position
+        "
       })?;
 
       statement
@@ -178,25 +178,23 @@ impl Database {
     let mut identifiers = Self::reconcile(&previous, &records)?;
 
     let inserted = {
-      let mut statement = transaction.prepare(
-        indoc! {
-          "
-          INSERT INTO executions (
-            id, command, timestamp_ns, duration_ns, exit_code, directory, session, hostname, shell
-          ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
-          ON CONFLICT (id) DO UPDATE SET
-            command = excluded.command,
-            timestamp_ns = excluded.timestamp_ns,
-            duration_ns = excluded.duration_ns,
-            exit_code = excluded.exit_code,
-            directory = excluded.directory,
-            session = excluded.session,
-            hostname = excluded.hostname,
-            shell = excluded.shell
-          WHERE ?10 = 0
-          "
-        },
-      )?;
+      let mut statement = transaction.prepare(indoc! {
+        "
+        INSERT INTO executions (
+          id, command, timestamp_ns, duration_ns, exit_code, directory, session, hostname, shell
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
+        ON CONFLICT (id) DO UPDATE SET
+          command = excluded.command,
+          timestamp_ns = excluded.timestamp_ns,
+          duration_ns = excluded.duration_ns,
+          exit_code = excluded.exit_code,
+          directory = excluded.directory,
+          session = excluded.session,
+          hostname = excluded.hostname,
+          shell = excluded.shell
+        WHERE ?10 = 0
+        "
+      })?;
 
       let mut inserted = 0;
 
@@ -275,14 +273,13 @@ impl Database {
 
     let directory = execution.directory()?;
 
-    self.connection.execute(
-      indoc! {
-        "
-        INSERT INTO executions (
-          id, command, timestamp_ns, duration_ns, exit_code, directory, session, hostname, shell
-        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
-        "
-      },
+    self.connection.execute(indoc! {
+      "
+      INSERT INTO executions (
+        id, command, timestamp_ns, duration_ns, exit_code, directory, session, hostname, shell
+      ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
+      "
+    },
       params![
         id.to_string(),
         execution.command,
@@ -329,16 +326,14 @@ impl Database {
     let limit = i64::try_from(limit)
       .context("execution limit exceeds SQLite integer range")?;
 
-    let mut statement = self.connection.prepare(
-      indoc! {
-        "
-        SELECT id, command, timestamp_ns, duration_ns, exit_code, directory, session, hostname, shell
-        FROM executions
-        ORDER BY timestamp_ns DESC, id DESC
-        LIMIT ?1
-        "
-      },
-    )?;
+    let mut statement = self.connection.prepare(indoc! {
+      "
+      SELECT id, command, timestamp_ns, duration_ns, exit_code, directory, session, hostname, shell
+      FROM executions
+      ORDER BY timestamp_ns DESC, id DESC
+      LIMIT ?1
+      "
+    })?;
 
     let rows = statement.query_and_then([limit], |row| -> Result<_> {
       let id = row.get::<_, String>("id")?;
@@ -405,15 +400,14 @@ impl Database {
 
     self
       .connection
-      .query_row(
-        indoc! {
-          "
-          INSERT INTO import_sources (id, format, path, generation)
-          VALUES (?1, ?2, ?3, 1)
-          ON CONFLICT (format, path) DO UPDATE SET generation = import_sources.generation + 1
-          RETURNING id, generation
-          "
-        },
+      .query_row(indoc! {
+        "
+        INSERT INTO import_sources (id, format, path, generation)
+        VALUES (?1, ?2, ?3, 1)
+        ON CONFLICT (format, path) DO UPDATE SET generation = import_sources.generation + 1
+        RETURNING id, generation
+        "
+      },
         params![source_id, format, path],
         |row| Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?)),
       )
@@ -716,12 +710,12 @@ mod tests {
         .query_row(
           indoc! {
             "
-            SELECT
-              (SELECT COUNT(*) FROM commands),
-              (SELECT COUNT(*) FROM executions),
-              (SELECT COUNT(*) FROM import_sources),
-              (SELECT COUNT(*) FROM source_records)
-            "
+          SELECT
+            (SELECT COUNT(*) FROM commands),
+            (SELECT COUNT(*) FROM executions),
+            (SELECT COUNT(*) FROM import_sources),
+            (SELECT COUNT(*) FROM source_records)
+          "
           },
           [],
           |row| {
@@ -758,11 +752,11 @@ mod tests {
       .connection()
       .execute_batch(indoc! {
         "
-          PRAGMA secure_delete = OFF;
-          CREATE TABLE foo (bar BLOB);
-          INSERT INTO foo VALUES (ZEROBLOB(65536));
-          DROP TABLE foo;
-          "
+        PRAGMA secure_delete = OFF;
+        CREATE TABLE foo (bar BLOB);
+        INSERT INTO foo VALUES (ZEROBLOB(65536));
+        DROP TABLE foo;
+        "
       })
       .unwrap();
 
@@ -917,11 +911,11 @@ mod tests {
         .query_row(
           indoc! {
             "
-            EXPLAIN QUERY PLAN
-            SELECT text, timestamp_ns, exit_code, directory
-            FROM commands
-            ORDER BY timestamp_ns DESC, execution_id DESC
-            "
+          EXPLAIN QUERY PLAN
+          SELECT text, timestamp_ns, exit_code, directory
+          FROM commands
+          ORDER BY timestamp_ns DESC, execution_id DESC
+          "
           },
           [],
           |row| row.get::<_, String>(3),
@@ -973,23 +967,23 @@ mod tests {
       .connection()
       .execute_batch(indoc! {
         "
-          CREATE TABLE command_changes (operation TEXT NOT NULL);
-          CREATE TRIGGER commands_insert_change
-          AFTER INSERT ON commands
-          BEGIN
-            INSERT INTO command_changes VALUES ('insert');
-          END;
-          CREATE TRIGGER commands_update_change
-          AFTER UPDATE ON commands
-          BEGIN
-            INSERT INTO command_changes VALUES ('update');
-          END;
-          CREATE TRIGGER commands_delete_change
-          AFTER DELETE ON commands
-          BEGIN
-            INSERT INTO command_changes VALUES ('delete');
-          END;
-          "
+        CREATE TABLE command_changes (operation TEXT NOT NULL);
+        CREATE TRIGGER commands_insert_change
+        AFTER INSERT ON commands
+        BEGIN
+          INSERT INTO command_changes VALUES ('insert');
+        END;
+        CREATE TRIGGER commands_update_change
+        AFTER UPDATE ON commands
+        BEGIN
+          INSERT INTO command_changes VALUES ('update');
+        END;
+        CREATE TRIGGER commands_delete_change
+        AFTER DELETE ON commands
+        BEGIN
+          INSERT INTO command_changes VALUES ('delete');
+        END;
+        "
       })
       .unwrap();
 
@@ -1205,10 +1199,10 @@ mod tests {
       .connection()
       .prepare(indoc! {
         "
-          SELECT text, timestamp_ns
-          FROM commands
-          ORDER BY timestamp_ns DESC, execution_id DESC
-          "
+        SELECT text, timestamp_ns
+        FROM commands
+        ORDER BY timestamp_ns DESC, execution_id DESC
+        "
       })
       .unwrap()
       .query_map([], |row| {
@@ -1520,10 +1514,10 @@ mod tests {
       .execute(
         indoc! {
           "
-          UPDATE executions
-          SET command = 'bar', timestamp_ns = 4, exit_code = 5, directory = '/foo'
-          WHERE id = ?1
-          "
+        UPDATE executions
+        SET command = 'bar', timestamp_ns = 4, exit_code = 5, directory = '/foo'
+        WHERE id = ?1
+        "
         },
         [second.to_string()],
       )
@@ -1598,10 +1592,10 @@ mod tests {
         .execute(
           indoc! {
             "
-            INSERT INTO commands (
-              text, timestamp_ns, execution_id, exit_code, directory
-            ) VALUES ('foo', 0, 'bar', NULL, NULL)
-            "
+          INSERT INTO commands (
+            text, timestamp_ns, execution_id, exit_code, directory
+          ) VALUES ('foo', 0, 'bar', NULL, NULL)
+          "
           },
           [],
         )
