@@ -92,19 +92,13 @@ impl Test {
     let connection = self.database();
 
     let mut statement = connection
-      .prepare(
-        "SELECT
-           command,
-           timestamp_ns,
-           duration_ns,
-           exit_code,
-           directory,
-           session,
-           hostname,
-           shell
-         FROM executions
-         ORDER BY timestamp_ns, id",
-      )
+      .prepare(indoc! {
+        "
+        SELECT command, timestamp_ns, duration_ns, exit_code, directory, session, hostname, shell
+        FROM executions
+        ORDER BY timestamp_ns, id
+        "
+      })
       .unwrap();
 
     statement
