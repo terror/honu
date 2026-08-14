@@ -40,7 +40,7 @@ fn backup() {
   test
     .arguments(["backup", "foo/bar/honu.sqlite"])
     .expected_stderr(
-      "error: backup `foo/bar/honu.sqlite` already exists; use --force to overwrite it\n",
+      "error: backup `foo/bar/honu.sqlite` already exists; use `--force` to overwrite it\n",
     )
     .expected_status(1).run()
     .write(
