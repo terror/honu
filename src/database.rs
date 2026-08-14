@@ -350,11 +350,12 @@ impl Database {
 
     let rows = statement.query_and_then([limit], |row| -> Result<_> {
       let id = row.get::<_, String>("id")?;
-      let execution = Execution::try_from(row)?;
-      let id = Uuid::parse_str(&id)
-        .with_context(|| format!("invalid execution ID `{id}`"))?;
 
-      Ok((id, execution))
+      Ok((
+        Uuid::parse_str(&id)
+          .with_context(|| format!("invalid execution ID `{id}`"))?,
+        Execution::try_from(row)?,
+      ))
     })?;
 
     rows.collect()
