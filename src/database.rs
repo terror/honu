@@ -1586,13 +1586,12 @@ mod tests {
     assert!(
       database
         .connection()
-        .execute(
-          indoc! {
+        .execute(indoc! {
             "
-          INSERT INTO commands (
-            text, timestamp_ns, execution_id, exit_code, directory
-          ) VALUES ('foo', 0, 'bar', NULL, NULL)
-          "
+            INSERT INTO commands (
+              text, timestamp_ns, execution_id, exit_code, directory
+            ) VALUES ('foo', 0, 'bar', NULL, NULL)
+            "
           },
           [],
         )
