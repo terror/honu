@@ -1509,13 +1509,12 @@ mod tests {
 
     database
       .connection()
-      .execute(
-        indoc! {
+      .execute(indoc! {
           "
-        UPDATE executions
-        SET command = 'bar', timestamp_ns = 4, exit_code = 5, directory = '/foo'
-        WHERE id = ?1
-        "
+          UPDATE executions
+          SET command = 'bar', timestamp_ns = 4, exit_code = 5, directory = '/foo'
+          WHERE id = ?1
+          "
         },
         [second.to_string()],
       )
