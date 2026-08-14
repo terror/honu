@@ -274,12 +274,7 @@ impl Database {
 
     let directory = execution.directory()?;
 
-    let transaction = Transaction::new_unchecked(
-      &self.connection,
-      TransactionBehavior::Immediate,
-    )?;
-
-    transaction.execute(
+    self.connection.execute(
       "INSERT INTO executions (
         id,
         command,
@@ -303,8 +298,6 @@ impl Database {
         execution.shell,
       ],
     )?;
-
-    transaction.commit()?;
 
     Ok(id)
   }
