@@ -84,17 +84,32 @@ jobs:
       run: cargo check --locked --workspace --all-targets
 
   shell:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os:
+        - ubuntu-latest
+        - macos-latest
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
 
     - name: Install Shells
+      if: runner.os == 'Linux'
       run: |
         sudo apt-get update
         sudo apt-get install bash fish zsh
 
+    - name: Install Fish
+      if: runner.os == 'macOS'
+      run: brew install fish
+
     - uses: Swatinem/rust-cache@v2
+
+    - name: Prefer System Shells
+      if: runner.os == 'macOS'
+      run: echo /bin >> "$GITHUB_PATH"
 
     - name: Test Shells
       run: 'cargo test --locked --workspace --all-targets --test integration shell:: -- --ignored'
@@ -107,7 +122,7 @@ jobs:
         - macos-latest
         - windows-latest
 
-    runs-on: ${{matrix.os}}
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
