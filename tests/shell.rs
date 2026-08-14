@@ -195,6 +195,43 @@ fn fish_records_execution() {
 }
 
 #[test]
+#[ignore = "requires fish"]
+fn fish_respects_history_exclusions() {
+  Test::new()
+    .program("fish")
+    .argument("--no-config")
+    .stdin(indoc! {
+      "
+      set -e fish_private_mode
+      honu init fish | source
+      emit fish_preexec ' true'
+      true
+      emit fish_postexec
+      function fish_should_add_to_history
+        not string match -q '*ignored-by-hook*' -- \"$argv[1]\"
+      end
+      emit fish_preexec ': ignored-by-hook'
+      true
+      emit fish_postexec
+      emit fish_preexec false
+      false
+      emit fish_postexec
+      "
+    })
+    .run()
+    .inspect(|test| {
+      assert_eq!(
+        test
+          .executions()
+          .into_iter()
+          .map(|execution| execution.command)
+          .collect::<Vec<_>>(),
+        ["false"],
+      );
+    });
+}
+
+#[test]
 #[ignore = "requires zsh"]
 fn zsh_init() {
   Test::new()
