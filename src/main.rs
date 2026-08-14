@@ -6,7 +6,7 @@ use {
   config::{Config, Search as SearchConfig, SearchMode},
   count::Count,
   database::Database,
-  honu::{Command, Execution, FromRow},
+  honu::{Command, Execution},
   imara_diff::{Algorithm, Diff, InternedInput},
   indicatif::{ProgressBar, ProgressStyle},
   line::Line,
