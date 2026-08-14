@@ -40,10 +40,10 @@ use {
     thread,
     time::{Duration, SystemTime, UNIX_EPOCH},
   },
-  truncate::Truncate,
   subcommand::Subcommand,
   tally::Tally,
   tempfile::NamedTempFile,
+  truncate::Truncate,
   unicode_segmentation::UnicodeSegmentation,
   uuid::Uuid,
 };
@@ -63,9 +63,9 @@ mod progress;
 mod record;
 mod records;
 mod shell;
-mod truncate;
 mod subcommand;
 mod tally;
+mod truncate;
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 
