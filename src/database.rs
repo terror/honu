@@ -222,11 +222,13 @@ impl Database {
           new,
         ])?;
 
-        if new && changed == 0 {
-          bail!("generated duplicate execution ID `{id}`");
-        }
+        if new {
+          if changed == 0 {
+            bail!("generated duplicate execution ID `{id}`");
+          }
 
-        inserted += usize::from(new);
+          inserted += 1;
+        }
 
         progress(Tally {
           inserted,
