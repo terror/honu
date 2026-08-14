@@ -20,8 +20,10 @@ impl Command {
   }
 }
 
-impl FromRow for Command {
-  fn from_row(row: &Row<'_>) -> Result<Self> {
+impl TryFrom<&Row<'_>> for Command {
+  type Error = Error;
+
+  fn try_from(row: &Row<'_>) -> Result<Self> {
     Ok(Self {
       directory: row
         .get::<_, Option<String>>("directory")?

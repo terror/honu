@@ -125,7 +125,7 @@ impl Database {
     };
 
     while let Some(row) = rows.next()? {
-      if !callback(Command::from_row(row)?) {
+      if !callback(Command::try_from(row)?) {
         break;
       }
     }
@@ -375,7 +375,7 @@ impl Database {
     let rows = statement.query_and_then([limit], |row| {
       Ok::<_, honu::Error>((
         row.get::<_, String>("id")?,
-        Execution::from_row(row)?,
+        Execution::try_from(row)?,
       ))
     })?;
 

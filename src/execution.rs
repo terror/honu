@@ -29,8 +29,10 @@ impl Execution {
   }
 }
 
-impl FromRow for Execution {
-  fn from_row(row: &Row<'_>) -> Result<Self> {
+impl TryFrom<&Row<'_>> for Execution {
+  type Error = Error;
+
+  fn try_from(row: &Row<'_>) -> Result<Self> {
     Ok(Self {
       command: row.get("command")?,
       directory: row
