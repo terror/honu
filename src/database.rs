@@ -1536,8 +1536,7 @@ mod tests {
         indoc! {
           "
           UPDATE executions
-          SET command = 'bar', timestamp_ns = 4, exit_code = 5,
-              directory = '/foo'
+          SET command = 'bar', timestamp_ns = 4, exit_code = 5, directory = '/foo'
           WHERE id = ?1
           "
         },
