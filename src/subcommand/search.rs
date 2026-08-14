@@ -3,6 +3,8 @@ use super::*;
 #[derive(Debug, Clap)]
 pub(crate) struct Search {
   #[arg(short, long)]
+  interactive: bool,
+  #[arg(short, long)]
   limit: Option<usize>,
   #[arg(default_value = "")]
   query: String,
@@ -68,7 +70,9 @@ impl Search {
 
     self.limit = self.limit.or(config.search.limit);
 
-    let options = SkimOptionsBuilder::default()
+    let mut options = SkimOptionsBuilder::default();
+
+    options
       .case(config.search.case)
       .color(format!(
         "none,\
@@ -89,10 +93,17 @@ impl Search {
       .prompt(config.search.prompt.as_str())
       .query(&self.query)
       .regex(matches!(config.search.mode, SearchMode::Regex))
-      .selector_icon("")
-      .build()?;
+      .selector_icon("");
+
+    if !self.interactive {
+      options.filter(&self.query);
+    }
+
+    let options = options.build()?;
 
     let (sender, receiver) = bounded(Self::CHANNEL_CAPACITY);
+
+    let interactive = self.interactive;
 
     let loader = thread::spawn(move || {
       self.load_items(&config.search, &database, &sender)
@@ -102,7 +113,7 @@ impl Search {
 
     let load_result = loader
       .join()
-      .map_err(|_| Error::msg("interactive search loader panicked"))?;
+      .map_err(|_| Error::msg("search loader panicked"))?;
 
     load_result?;
 
@@ -112,8 +123,14 @@ impl Search {
       return Ok(());
     }
 
-    if let Some(item) = output.selected_items.first() {
-      println!("{}", item.output());
+    if interactive {
+      if let Some(item) = output.selected_items.first() {
+        println!("{}", item.output());
+      }
+    } else {
+      for item in output.selected_items {
+        println!("{}", item.output());
+      }
     }
 
     Ok(())

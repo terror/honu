@@ -79,13 +79,14 @@ honu import
 The shell is detected automatically, or may be passed explicitly with
 `honu import bash`, `honu import fish`, or `honu import zsh`.
 
-Press `control-r` to search your recorded history. The current command line is
-used as the initial query, and the selected command replaces it without being
-executed. You can also start a search directly:
+Press `control-r` to interactively search your recorded history. The current
+command line is used as the initial query, and the selected command replaces it
+without being executed. You can also search directly and print matches:
 
 ```bash
 honu search
 honu search cargo
+honu search --interactive cargo
 ```
 
 Use `honu list` to print recent commands and `honu backup` to copy the database:
@@ -134,9 +135,10 @@ passed to `honu import` takes precedence over this setting.
 
 ### Search
 
-Search uses 60% of the terminal height by default. The configured height must be
-between 1 and 100. There is no default result limit, and `--limit` overrides the
-configured limit.
+Search prints matches non-interactively by default. Pass `--interactive` to open
+the interactive picker, which uses 60% of the terminal height by default. The
+configured height must be between 1 and 100. There is no default result limit,
+and `--limit` overrides the configured limit.
 
 Case matching may be `smart`, `sensitive`, or `insensitive`, and defaults to
 `smart`. Search mode may be `fuzzy`, `exact`, or `regex`, and defaults to
