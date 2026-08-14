@@ -3,11 +3,10 @@ use {
   arguments::Arguments,
   choice::Choice,
   clap::{Parser as Clap, ValueEnum},
-  command::Command,
   config::{Config, Search as SearchConfig, SearchMode},
   count::Count,
   database::Database,
-  honu::Execution,
+  honu::{Command, Execution, FromRow},
   imara_diff::{Algorithm, Diff, InternedInput},
   indicatif::{ProgressBar, ProgressStyle},
   line::Line,
@@ -54,7 +53,6 @@ use {std::os::unix::fs::PermissionsExt, xdg::BaseDirectories};
 
 mod arguments;
 mod choice;
-mod command;
 mod config;
 mod count;
 mod database;

@@ -125,14 +125,7 @@ impl Database {
     };
 
     while let Some(row) = rows.next()? {
-      let command = Command {
-        timestamp_ns: row.get(1)?,
-        exit_code: row.get(2)?,
-        directory: row.get::<_, Option<String>>(3)?.map(PathBuf::from),
-        text: row.get(0)?,
-      };
-
-      if !callback(command) {
+      if !callback(Command::from_row(row)?) {
         break;
       }
     }
@@ -379,19 +372,10 @@ impl Database {
       LIMIT ?1",
     )?;
 
-    let rows = statement.query_map([limit], |row| {
-      Ok((
-        row.get::<_, String>(0)?,
-        Execution {
-          command: row.get(1)?,
-          timestamp_ns: row.get(2)?,
-          duration_ns: row.get(3)?,
-          exit_code: row.get(4)?,
-          directory: row.get::<_, Option<String>>(5)?.map(PathBuf::from),
-          session: row.get(6)?,
-          hostname: row.get(7)?,
-          shell: row.get(8)?,
-        },
+    let rows = statement.query_and_then([limit], |row| {
+      Ok::<_, honu::Error>((
+        row.get::<_, String>("id")?,
+        Execution::from_row(row)?,
       ))
     })?;
 

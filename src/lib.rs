@@ -1,8 +1,15 @@
-use std::path::PathBuf;
+use {
+  rusqlite::Row,
+  std::{borrow::Cow, path::PathBuf},
+};
 
-pub use {error::Error, execution::Execution};
+pub use {
+  command::Command, error::Error, execution::Execution, from_row::FromRow,
+};
 
+mod command;
 mod error;
 mod execution;
+mod from_row;
 
 type Result<T = ()> = std::result::Result<T, Error>;
