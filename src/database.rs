@@ -401,13 +401,13 @@ impl Database {
     self
       .connection
       .query_row(indoc! {
-        "
-        INSERT INTO import_sources (id, format, path, generation)
-        VALUES (?1, ?2, ?3, 1)
-        ON CONFLICT (format, path) DO UPDATE SET generation = import_sources.generation + 1
-        RETURNING id, generation
-        "
-      },
+          "
+          INSERT INTO import_sources (id, format, path, generation)
+          VALUES (?1, ?2, ?3, 1)
+          ON CONFLICT (format, path) DO UPDATE SET generation = import_sources.generation + 1
+          RETURNING id, generation
+          "
+        },
         params![source_id, format, path],
         |row| Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?)),
       )
