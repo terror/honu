@@ -29,20 +29,21 @@ fn backup_copies_executions() {
 #[cfg(unix)]
 #[test]
 fn backup_has_private_permissions() {
-  let test = Test::new()
+  Test::new()
     .arguments(["backup", "foo/bar/honu.sqlite"])
-    .run();
-
-  assert_eq!(
-    test
-      .path("foo/bar/honu.sqlite")
-      .metadata()
-      .unwrap()
-      .permissions()
-      .mode()
-      & 0o777,
-    0o600,
-  );
+    .run()
+    .inspect(|test| {
+      assert_eq!(
+        test
+          .path("foo/bar/honu.sqlite")
+          .metadata()
+          .unwrap()
+          .permissions()
+          .mode()
+          & 0o777,
+        0o600,
+      );
+    });
 }
 
 #[test]
