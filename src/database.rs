@@ -98,16 +98,14 @@ impl Database {
       .context("command limit exceeds SQLite integer range")?
       .unwrap_or(-1);
 
-    let mut statement = self.connection.prepare(
-      indoc! {
-        "
+    let mut statement = self.connection.prepare(indoc! {
+      "
         SELECT text, timestamp_ns, exit_code, directory
         FROM commands
         ORDER BY timestamp_ns DESC, execution_id DESC
         LIMIT ?1
         "
-      },
-    )?;
+    })?;
 
     let mut rows = statement.query([limit])?;
 
@@ -161,16 +159,14 @@ impl Database {
     }
 
     let previous = {
-      let mut statement = transaction.prepare(
-        indoc! {
-          "
+      let mut statement = transaction.prepare(indoc! {
+        "
           SELECT fingerprint, execution_id
           FROM source_records
           WHERE source_id = ?1
           ORDER BY position
           "
-        },
-      )?;
+      })?;
 
       statement
         .query_map([&source_id], |row| {
@@ -249,9 +245,8 @@ impl Database {
     )?;
 
     {
-      let mut statement = transaction.prepare(
-        indoc! {
-          "
+      let mut statement = transaction.prepare(indoc! {
+        "
           INSERT INTO source_records (
             source_id,
             position,
@@ -259,8 +254,7 @@ impl Database {
             execution_id
           ) VALUES (?1, ?2, ?3, ?4)
           "
-        },
-      )?;
+      })?;
 
       for (position, (record, identifier)) in
         records.iter().zip(identifiers).enumerate()
@@ -765,16 +759,14 @@ mod tests {
 
     database
       .connection()
-      .execute_batch(
-        indoc! {
-          "
+      .execute_batch(indoc! {
+        "
           PRAGMA secure_delete = OFF;
           CREATE TABLE foo (bar BLOB);
           INSERT INTO foo VALUES (ZEROBLOB(65536));
           DROP TABLE foo;
           "
-        },
-      )
+      })
       .unwrap();
 
     assert_eq!(
@@ -982,9 +974,8 @@ mod tests {
 
     database
       .connection()
-      .execute_batch(
-        indoc! {
-          "
+      .execute_batch(indoc! {
+        "
           CREATE TABLE command_changes (operation TEXT NOT NULL);
           CREATE TRIGGER commands_insert_change
           AFTER INSERT ON commands
@@ -1002,8 +993,7 @@ mod tests {
             INSERT INTO command_changes VALUES ('delete');
           END;
           "
-        },
-      )
+      })
       .unwrap();
 
     assert_eq!(
@@ -1216,15 +1206,13 @@ mod tests {
 
     let commands = database
       .connection()
-      .prepare(
-        indoc! {
-          "
+      .prepare(indoc! {
+        "
           SELECT text, timestamp_ns
           FROM commands
           ORDER BY timestamp_ns DESC, execution_id DESC
           "
-        },
-      )
+      })
       .unwrap()
       .query_map([], |row| {
         Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
