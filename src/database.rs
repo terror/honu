@@ -247,13 +247,10 @@ impl Database {
     {
       let mut statement = transaction.prepare(indoc! {
         "
-          INSERT INTO source_records (
-            source_id,
-            position,
-            fingerprint,
-            execution_id
-          ) VALUES (?1, ?2, ?3, ?4)
-          "
+        INSERT INTO source_records (
+          source_id, position, fingerprint, execution_id
+        ) VALUES (?1, ?2, ?3, ?4)
+        "
       })?;
 
       for (position, (record, identifier)) in
