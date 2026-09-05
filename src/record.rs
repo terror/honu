@@ -7,6 +7,27 @@ pub(super) struct Record {
 }
 
 impl Record {
+  pub(super) fn extended(
+    command: &str,
+    timestamp_ns: i64,
+    duration_ns: i64,
+  ) -> Self {
+    Self::new(
+      Execution {
+        command: command.into(),
+        duration_ns: Some(duration_ns),
+        timestamp_ns,
+        ..Default::default()
+      },
+      b"extended",
+      [
+        command.as_bytes(),
+        &timestamp_ns.to_be_bytes(),
+        &duration_ns.to_be_bytes(),
+      ],
+    )
+  }
+
   pub(super) fn new(
     execution: Execution,
     variant: &[u8],
@@ -33,6 +54,34 @@ impl Record {
       execution,
       fingerprint,
     }
+  }
+
+  pub(super) fn plain(command: &str, timestamp_ns: &mut i64) -> Result<Self> {
+    *timestamp_ns = timestamp_ns
+      .checked_add(1)
+      .context("plain history timestamp exceeds SQLite integer range")?;
+
+    Ok(Self::new(
+      Execution {
+        command: command.into(),
+        timestamp_ns: *timestamp_ns,
+        ..Default::default()
+      },
+      b"plain",
+      [command.as_bytes()],
+    ))
+  }
+
+  pub(super) fn timestamped(command: &str, timestamp_ns: i64) -> Self {
+    Self::new(
+      Execution {
+        command: command.into(),
+        timestamp_ns,
+        ..Default::default()
+      },
+      b"timestamped",
+      [command.as_bytes(), &timestamp_ns.to_be_bytes()],
+    )
   }
 }
 
@@ -68,5 +117,29 @@ mod tests {
       )
       .fingerprint,
     );
+  }
+
+  #[test]
+  fn plain_timestamp_overflow() {
+    let mut timestamp_ns = i64::MAX - 1;
+
+    assert_eq!(
+      Record::plain("foo", &mut timestamp_ns)
+        .unwrap()
+        .execution
+        .timestamp_ns,
+      i64::MAX,
+    );
+
+    assert_eq!(timestamp_ns, i64::MAX);
+
+    assert_eq!(
+      Record::plain("bar", &mut timestamp_ns)
+        .unwrap_err()
+        .to_string(),
+      "plain history timestamp exceeds SQLite integer range",
+    );
+
+    assert_eq!(timestamp_ns, i64::MAX);
   }
 }

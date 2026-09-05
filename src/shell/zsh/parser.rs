@@ -56,37 +56,9 @@ impl ZshParser {
 
       let duration_ns = nanoseconds(duration, "duration")?;
 
-      Ok(Some(Record::new(
-        Execution {
-          command: command.into(),
-          duration_ns: Some(duration_ns),
-          timestamp_ns,
-          ..Default::default()
-        },
-        b"extended",
-        [
-          command.as_bytes().to_vec(),
-          timestamp_ns.to_be_bytes().to_vec(),
-          duration_ns.to_be_bytes().to_vec(),
-        ],
-      )))
+      Ok(Some(Record::extended(command, timestamp_ns, duration_ns)))
     } else {
-      self.plain_timestamp_ns = self
-        .plain_timestamp_ns
-        .checked_add(1)
-        .context("plain history timestamp exceeds SQLite integer range")?;
-
-      let components = vec![command.as_bytes().to_vec()];
-
-      Ok(Some(Record::new(
-        Execution {
-          command,
-          timestamp_ns: self.plain_timestamp_ns,
-          ..Default::default()
-        },
-        b"plain",
-        components,
-      )))
+      Record::plain(&command, &mut self.plain_timestamp_ns).map(Some)
     }
   }
 }

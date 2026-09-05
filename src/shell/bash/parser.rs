@@ -35,33 +35,9 @@ impl BashParser {
           format!("timestamp on history line {line} overflows nanoseconds")
         })?;
 
-      Ok(Some(Record::new(
-        Execution {
-          command: command.clone(),
-          timestamp_ns,
-          ..Default::default()
-        },
-        b"timestamped",
-        [
-          command.as_bytes().to_vec(),
-          timestamp_ns.to_be_bytes().to_vec(),
-        ],
-      )))
+      Ok(Some(Record::timestamped(&command, timestamp_ns)))
     } else {
-      self.plain_timestamp_ns = self
-        .plain_timestamp_ns
-        .checked_add(1)
-        .context("plain history timestamp exceeds SQLite integer range")?;
-
-      Ok(Some(Record::new(
-        Execution {
-          command: command.clone(),
-          timestamp_ns: self.plain_timestamp_ns,
-          ..Default::default()
-        },
-        b"plain",
-        [command.as_bytes()],
-      )))
+      Record::plain(&command, &mut self.plain_timestamp_ns).map(Some)
     }
   }
 
