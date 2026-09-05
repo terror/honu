@@ -150,10 +150,15 @@ impl Database {
         .collect::<rusqlite::Result<Vec<_>>>()?
     };
 
-    let mut identifiers = Self::reconcile(&previous, &records)?;
+    let identifiers = Self::reconcile(&previous, &records)?;
+
+    transaction.execute(
+      "DELETE FROM source_records WHERE source_id = ?1",
+      [&source_id],
+    )?;
 
     let inserted = {
-      let mut statement = transaction.prepare(indoc! {
+      let mut executions = transaction.prepare(indoc! {
         "
         INSERT INTO executions (
           id, command, timestamp_ns, duration_ns, exit_code, directory, session, hostname, shell
@@ -171,19 +176,27 @@ impl Database {
         "
       })?;
 
+      let mut source_records = transaction.prepare(indoc! {
+        "
+        INSERT INTO source_records (
+          source_id, position, fingerprint, execution_id
+        ) VALUES (?1, ?2, ?3, ?4)
+        "
+      })?;
+
       let mut inserted = 0;
 
-      for (index, (record, identifier)) in
-        records.iter().zip(&mut identifiers).enumerate()
+      for (position, (record, identifier)) in
+        records.iter().zip(identifiers).enumerate()
       {
         let new = identifier.is_none();
 
-        let id = identifier.get_or_insert_with(|| Uuid::new_v4().to_string());
+        let id = identifier.unwrap_or_else(|| Uuid::new_v4().to_string());
 
         let directory = record.execution.directory()?;
 
-        let changed = statement.execute(params![
-          id.as_str(),
+        let changed = executions.execute(params![
+          id,
           record.execution.command,
           record.execution.timestamp_ns,
           record.execution.duration_ns,
@@ -203,40 +216,21 @@ impl Database {
           inserted += 1;
         }
 
+        source_records.execute(params![
+          source_id,
+          i64::try_from(position)?,
+          record.fingerprint,
+          id,
+        ])?;
+
         progress(Tally {
           inserted,
-          processed: index + 1,
+          processed: position + 1,
         });
       }
 
       inserted
     };
-
-    transaction.execute(
-      "DELETE FROM source_records WHERE source_id = ?1",
-      [&source_id],
-    )?;
-
-    {
-      let mut statement = transaction.prepare(indoc! {
-        "
-        INSERT INTO source_records (
-          source_id, position, fingerprint, execution_id
-        ) VALUES (?1, ?2, ?3, ?4)
-        "
-      })?;
-
-      for (position, (record, identifier)) in
-        records.iter().zip(identifiers).enumerate()
-      {
-        statement.execute(params![
-          source_id,
-          i64::try_from(position)?,
-          record.fingerprint,
-          identifier.unwrap(),
-        ])?;
-      }
-    }
 
     transaction.commit()?;
 
@@ -1073,6 +1067,25 @@ mod tests {
     let database =
       Database::try_from(Connection::open_in_memory().unwrap()).unwrap();
 
+    let records = [Record {
+      execution: Execution {
+        command: "baz".into(),
+        ..Default::default()
+      },
+      fingerprint: b"baz".to_vec(),
+    }];
+
+    database
+      .import(
+        "test",
+        Path::new("foo"),
+        records.iter().cloned().map(Ok),
+        |_| {},
+      )
+      .unwrap();
+
+    let imported = database.recent(20).unwrap();
+
     let error = database
       .import(
         "test",
@@ -1110,8 +1123,20 @@ mod tests {
         Some(rusqlite::ffi::ErrorCode::ConstraintViolation),
         "CHECK constraint failed: duration_ns IS NULL OR duration_ns >= 0"
           .into(),
-        Vec::new(),
+        imported,
       ),
+    );
+
+    assert_eq!(
+      database
+        .import(
+          "test",
+          Path::new("foo"),
+          records.into_iter().map(Ok),
+          |_| {},
+        )
+        .unwrap(),
+      0,
     );
   }
 
