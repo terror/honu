@@ -119,10 +119,6 @@ impl SkimItem for Choice {
     line
   }
 
-  fn output(&self) -> Cow<'_, str> {
-    Cow::Borrowed(&self.command.text)
-  }
-
   fn text(&self) -> Cow<'_, str> {
     Cow::Borrowed(&self.command.text)
   }
